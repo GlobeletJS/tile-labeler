@@ -1,0 +1,35 @@
+{
+  "name": "tile-labeler",
+  "version": "0.0.0",
+  "description": "Convert map label features into WebGL buffers for rendering",
+  "module": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GlobeletJS/tile-labeler.git"
+  },
+  "keywords": [
+    "map",
+    "style",
+    "label",
+    "symbol",
+    "WebGL",
+    "text",
+    "shaping"
+  ],
+  "author": "Jeshurun Hembd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GlobeletJS/tile-labeler/issues"
+  },
+  "homepage": "https://github.com/GlobeletJS/tile-labeler#readme",
+  "dependencies": {
+    "sdf-manager": "0.0.4"
+  }
+}
