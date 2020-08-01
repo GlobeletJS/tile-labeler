@@ -2,12 +2,15 @@
   "name": "tile-labeler",
   "version": "0.0.1",
   "description": "Convert map label features into WebGL buffers for rendering",
-  "module": "src/index.js",
+  "main": "dist/tile-labeler.bundle.js",
+  "module": "dist/tile-labeler.bundle.js",
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c build/rollup.config.js",
     "postversion": "git push && git push --tags"
   },
   "repository": {
@@ -31,5 +34,10 @@
   "homepage": "https://github.com/GlobeletJS/tile-labeler#readme",
   "dependencies": {
     "sdf-manager": "0.0.4"
+  },
+  "devDependencies": {
+    "rollup": "^2.23.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0"
   }
 }
