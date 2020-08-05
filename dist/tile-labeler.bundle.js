@@ -1399,7 +1399,8 @@ function initShaping(style) {
     const lineHeight = layout["text-line-height"](zoom, feature) * ONE_EM;
 
     const boxSize = [Math.max(...lineWidths), lines.length * lineHeight];
-    const textOffset = layout["text-offset"](zoom, feature) * ONE_EM;
+    const textOffset = layout["text-offset"](zoom, feature)
+      .map(c => c * ONE_EM);
     const boxShift = getTextBoxShift( layout["text-anchor"](zoom, feature) );
     const boxOrigin = boxShift.map((c, i) => c * boxSize[i] + textOffset[i]);
 
