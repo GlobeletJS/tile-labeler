@@ -54,13 +54,14 @@ export function initShaping(style) {
     const rects = lines.flat()
       .flatMap(g => Object.values(g.rect));
 
-    // 8. Adjust bounding box for collision checks
+    // 8. Compute bounding box for collision checks
+    const scalar = layout["text-size"](zoom, feature) / ONE_EM;
     const textPadding = layout["text-padding"](zoom, feature);
     const bbox = [
-      boxOrigin[0] - textPadding,
-      boxOrigin[1] - textPadding,
-      boxOrigin[0] + boxSize[0] + textPadding,
-      boxOrigin[1] + boxSize[1] + textPadding
+      boxOrigin[0] * scalar - textPadding,
+      boxOrigin[1] * scalar - textPadding,
+      (boxOrigin[0] + boxSize[0]) * scalar + textPadding,
+      (boxOrigin[1] + boxSize[1]) * scalar + textPadding
     ];
 
     const buffers = { origins, deltas, rects, bbox };
