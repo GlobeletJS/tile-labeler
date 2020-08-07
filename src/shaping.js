@@ -89,11 +89,15 @@ function layoutLine(glyphs, origin, spacing) {
 function getGlyphInfo(feature, atlas) {
   const positions = atlas.positions[feature.font];
 
-  return feature.labelText.split("").map(character => {
+  const info = feature.labelText.split("").map(character => {
     let code = character.charCodeAt(0);
-    let { metrics, rect } = positions[code];
+    let pos = positions[code];
+    if (!pos) return;
+    let { metrics, rect } = pos;
     return { code, metrics, rect };
   });
+
+  return info.filter(i => i !== undefined);
 }
 
 function measureLine(glyphs, spacing) {
