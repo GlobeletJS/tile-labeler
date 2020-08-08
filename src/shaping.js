@@ -1,3 +1,4 @@
+import { getGlyphInfo } from "./glyphs.js";
 import { splitLines } from "./splits.js";
 import { getTextBoxShift, getLineShift } from "./text-utils.js";
 import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from 'sdf-manager';
@@ -84,20 +85,6 @@ function layoutLine(glyphs, origin, spacing) {
 
     return [dx, dy];
   });
-}
-
-function getGlyphInfo(feature, atlas) {
-  const positions = atlas.positions[feature.font];
-
-  const info = feature.labelText.split("").map(character => {
-    let code = character.charCodeAt(0);
-    let pos = positions[code];
-    if (!pos) return;
-    let { metrics, rect } = pos;
-    return { code, metrics, rect };
-  });
-
-  return info.filter(i => i !== undefined);
 }
 
 function measureLine(glyphs, spacing) {

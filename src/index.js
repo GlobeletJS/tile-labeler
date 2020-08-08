@@ -1,52 +1,55 @@
+import { initText } from "./text.js";
 import { initGlyphs } from "./glyphs.js";
 import { initShaping } from "./shaping.js";
 import RBush from 'rbush';
 
 export function initSymbols({ parsedStyles, glyphEndpoint }) {
-  const getGlyphs = initGlyphs({ parsedStyles, glyphEndpoint });
-
-  const shapers = parsedStyles.reduce((dict, style) => {
-    let { id, type } = style;
-    if (type === "symbol") dict[id] = initShaping(style);
-    return dict;
-  }, {});
+  const getText = initText(parsedStyles);
+  const getGlyphs = initGlyphs(glyphEndpoint);
+  const shapeText = initShapers(parsedStyles);
 
   return function(layers, zoom) {
-    return getGlyphs(layers, zoom).then(atlas => {
-      const shaped = Object.entries(layers).reduce((d, [id, features]) => {
-        // TODO: if getGlyphs or a previous step drops the non-symbol layers,
-        // then we can drop the if below
-        let shaper = shapers[id];
-        if (shaper) d[id] = features.map(f => shaper(f, zoom, atlas));
-        return d;
-      }, {});
+    const textLayers = getText(layers, zoom);
 
-      const tree = new RBush();
-      Object.entries(shaped).reverse().forEach(([id, features]) => {
-        shaped[id] = collide(features, tree);
-      });
-
-      return { atlas: atlas.image, layers: shaped };
-    });
+    return getGlyphs(textLayers)
+      .then(atlas => shapeText(textLayers, zoom, atlas));
   };
 }
 
-function collide(features, tree) {
+function initShapers(styles) {
+  const shapers = styles
+    .filter(s => s.type === "symbol")
+    .reduce((d, s) => (d[s.id] = initShaping(s), d), {});
+
+  return function(textLayers, zoom, atlas) {
+    const shaped = Object.entries(textLayers).reduce((d, [id, features]) => {
+      d[id] = features.map(f => shapers[id](f, zoom, atlas));
+      return d;
+    }, {});
+
+    const tree = new RBush();
+    Object.entries(shaped).reverse().forEach(([id, features]) => {
+      shaped[id] = features.filter(f => collide(f, tree));
+    });
+
+    return { atlas: atlas.image, layers: shaped };
+  };
+}
+
+function collide(feature, tree) {
   // NOTE: tree will be modified!!
 
-  return features.filter(feature => {
-    let { origins, bbox } = feature.buffers;
-    let [ x0, y0 ] = origins;
-    let box = {
-      minX: x0 + bbox[0],
-      minY: y0 + bbox[1],
-      maxX: x0 + bbox[2],
-      maxY: y0 + bbox[3],
-    };
+  let { origins, bbox } = feature.buffers;
+  let [ x0, y0 ] = origins;
+  let box = {
+    minX: x0 + bbox[0],
+    minY: y0 + bbox[1],
+    maxX: x0 + bbox[2],
+    maxY: y0 + bbox[3],
+  };
 
-    if (tree.collides(box)) return false;
+  if (tree.collides(box)) return false;
 
-    tree.insert(box);
-    return true; // TODO: drop feature if outside tile?
-  });
+  tree.insert(box);
+  return true; // TODO: drop feature if outside tile?
 }
