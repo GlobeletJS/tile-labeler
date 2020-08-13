@@ -23,7 +23,8 @@ function initShapers(styles) {
 
   return function(textLayers, zoom, atlas) {
     const shaped = Object.entries(textLayers).reduce((d, [id, features]) => {
-      d[id] = features.map(f => shapers[id](f, zoom, atlas));
+      d[id] = features.map(f => shapers[id](f, zoom, atlas))
+        .filter(f => f !== undefined);
       return d;
     }, {});
 

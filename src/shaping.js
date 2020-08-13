@@ -16,6 +16,7 @@ export function initShaping(style) {
 
     // 1. Get the glyphs for the characters
     const glyphs = getGlyphInfo(feature, atlas);
+    if (!glyphs) return;
 
     // 2. Split into lines
     const spacing = layout["text-letter-spacing"](zoom, feature) * ONE_EM;

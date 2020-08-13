@@ -20,9 +20,10 @@ function collectCharCodes(fonts, features) {
 }
 
 export function getGlyphInfo(feature, atlas) {
-  // TODO: ASSUMES this feature has .font and .charCodes
+  const { font, charCodes } = feature;
+  const positions = atlas.positions[font];
 
-  const positions = atlas.positions[feature.font];
+  if (!positions || !charCodes || !charCodes.length) return;
 
   const info = feature.charCodes.map(code => {
     let pos = positions[code];

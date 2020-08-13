@@ -1184,9 +1184,10 @@ function collectCharCodes(fonts, features) {
 }
 
 function getGlyphInfo(feature, atlas) {
-  // TODO: ASSUMES this feature has .font and .charCodes
+  const { font, charCodes } = feature;
+  const positions = atlas.positions[font];
 
-  const positions = atlas.positions[feature.font];
+  if (!positions || !charCodes || !charCodes.length) return;
 
   const info = feature.charCodes.map(code => {
     let pos = positions[code];
@@ -1401,6 +1402,7 @@ function initShaping(style) {
 
     // 1. Get the glyphs for the characters
     const glyphs = getGlyphInfo(feature, atlas);
+    if (!glyphs) return;
 
     // 2. Split into lines
     const spacing = layout["text-letter-spacing"](zoom, feature) * ONE_EM;
@@ -2065,7 +2067,8 @@ function initShapers(styles) {
 
   return function(textLayers, zoom, atlas) {
     const shaped = Object.entries(textLayers).reduce((d, [id, features]) => {
-      d[id] = features.map(f => shapers[id](f, zoom, atlas));
+      d[id] = features.map(f => shapers[id](f, zoom, atlas))
+        .filter(f => f !== undefined);
       return d;
     }, {});
 
