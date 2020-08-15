@@ -1,5 +1,5 @@
 import { getGlyphInfo } from "./glyphs.js";
-import { splitLines } from "./splits.js";
+import { measureLine, splitLines } from "./splits.js";
 import { getTextBoxShift, getLineShift } from "./text-utils.js";
 import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from 'sdf-manager';
 
@@ -86,12 +86,4 @@ function layoutLine(glyphs, origin, spacing) {
 
     return [dx, dy];
   });
-}
-
-function measureLine(glyphs, spacing) {
-  if (glyphs.length < 1) return 0;
-
-  // No initial value for reduce--so no spacing added for 1st char
-  return glyphs.map(g => g.metrics.advance)
-    .reduce((a, c) => a + c + spacing);
 }
