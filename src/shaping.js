@@ -66,9 +66,7 @@ export function initShaping(style) {
       (boxOrigin[1] + boxSize[1]) * scalar + textPadding
     ];
 
-    const buffers = { origins, deltas, rects, bbox };
-
-    return { properties: feature.properties, buffers };
+    return { origins, deltas, rects, bbox };
   }
 }
 
