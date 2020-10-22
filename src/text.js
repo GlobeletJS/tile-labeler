@@ -1,15 +1,20 @@
 import { getTokenParser } from "./tokens.js";
 
 export function initText(parsedStyles) {
-  const textGetters = parsedStyles
+  const transforms = parsedStyles
     .filter(s => s.type === "symbol")
     .reduce((d, s) => (d[s.id] = initTextGetter(s), d), {});
 
   return function(layers, zoom) {
-    return Object.entries(layers).reduce((textLayers, [id, features]) => {
-      const getter = textGetters[id];
-      if (getter) textLayers[id] = features.map(f => getter(f, zoom));
-      return textLayers;
+    return Object.entries(layers).reduce((d, [id, layer]) => {
+      const transform = transforms[id];
+      if (!transform) return d;
+      
+      let { type, extent, features } = layer;
+      let mapped = features.map(f => transform(f, zoom));
+
+      if (mapped.length) d[id] = { type, extent, features: mapped };
+      return d;
     }, {});
   };
 }

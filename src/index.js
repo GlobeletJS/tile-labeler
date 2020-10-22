@@ -22,18 +22,21 @@ function initShapers(styles) {
     .reduce((d, s) => (d[s.id] = initShaping(s), d), {});
 
   return function(textLayers, zoom, atlas) {
-    const shaped = Object.entries(textLayers).reduce((d, [id, features]) => {
-      d[id] = features.map(feature => {
+    const shaped = Object.entries(textLayers).reduce((d, [id, layer]) => {
+      let { type, extent, features } = layer;
+      let mapped = features.map(feature => {
         let { properties, geometry } = feature;
         let buffers = shapers[id](feature, zoom, atlas);
         if (buffers) return { properties, geometry, buffers };
       }).filter(f => f !== undefined);
+
+      if (mapped.length) d[id] = { type, extent, features: mapped };
       return d;
     }, {});
 
     const tree = new RBush();
-    Object.entries(shaped).reverse().forEach(([id, features]) => {
-      shaped[id] = features.filter(f => collide(f, tree));
+    Object.values(shaped).reverse().forEach(layer => {
+      layer.features = layer.features.filter(f => collide(f, tree));
     });
 
     return { atlas: atlas.image, layers: shaped };

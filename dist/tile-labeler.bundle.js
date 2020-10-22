@@ -40,15 +40,20 @@ function getTokenParser(tokenText) {
 }
 
 function initText(parsedStyles) {
-  const textGetters = parsedStyles
+  const transforms = parsedStyles
     .filter(s => s.type === "symbol")
     .reduce((d, s) => (d[s.id] = initTextGetter(s), d), {});
 
   return function(layers, zoom) {
-    return Object.entries(layers).reduce((textLayers, [id, features]) => {
-      const getter = textGetters[id];
-      if (getter) textLayers[id] = features.map(f => getter(f, zoom));
-      return textLayers;
+    return Object.entries(layers).reduce((d, [id, layer]) => {
+      const transform = transforms[id];
+      if (!transform) return d;
+      
+      let { type, extent, features } = layer;
+      let mapped = features.map(f => transform(f, zoom));
+
+      if (mapped.length) d[id] = { type, extent, features: mapped };
+      return d;
     }, {});
   };
 }
@@ -1168,7 +1173,9 @@ function initGlyphs(glyphEndpoint) {
   const getAtlas = initGetter(glyphEndpoint);
 
   return function(layers, zoom) {
-    const fonts = Object.values(layers).reduce(collectCharCodes, {});
+    const fonts = Object.values(layers)
+      .map(layer => layer.features)
+      .reduce(collectCharCodes, {});
 
     return getAtlas(fonts);
   };
@@ -2065,18 +2072,21 @@ function initShapers(styles) {
     .reduce((d, s) => (d[s.id] = initShaping(s), d), {});
 
   return function(textLayers, zoom, atlas) {
-    const shaped = Object.entries(textLayers).reduce((d, [id, features]) => {
-      d[id] = features.map(feature => {
+    const shaped = Object.entries(textLayers).reduce((d, [id, layer]) => {
+      let { type, extent, features } = layer;
+      let mapped = features.map(feature => {
         let { properties, geometry } = feature;
         let buffers = shapers[id](feature, zoom, atlas);
         if (buffers) return { properties, geometry, buffers };
       }).filter(f => f !== undefined);
+
+      if (mapped.length) d[id] = { type, extent, features: mapped };
       return d;
     }, {});
 
     const tree = new RBush();
-    Object.entries(shaped).reverse().forEach(([id, features]) => {
-      shaped[id] = features.filter(f => collide(f, tree));
+    Object.values(shaped).reverse().forEach(layer => {
+      layer.features = layer.features.filter(f => collide(f, tree));
     });
 
     return { atlas: atlas.image, layers: shaped };

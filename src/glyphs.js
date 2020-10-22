@@ -4,7 +4,9 @@ export function initGlyphs(glyphEndpoint) {
   const getAtlas = sdfManager.initGetter(glyphEndpoint);
 
   return function(layers, zoom) {
-    const fonts = Object.values(layers).reduce(collectCharCodes, {});
+    const fonts = Object.values(layers)
+      .map(layer => layer.features)
+      .reduce(collectCharCodes, {});
 
     return getAtlas(fonts);
   };
