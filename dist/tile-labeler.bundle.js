@@ -1445,9 +1445,11 @@ function initShaping(style) {
       return [x, y];
     });
 
-    // 5. Compute top left corners of the glyphs in each line
+    // 5. Compute top left corners of the glyphs in each line,
+    //    appending the font size scalar for final positioning
+    const scalar = layout["text-size"](zoom, feature) / ONE_EM;
     const deltas = lines
-      .flatMap((l, i) => layoutLine(l, lineOrigins[i], spacing));
+      .flatMap((l, i) => layoutLine(l, lineOrigins[i], spacing, scalar));
 
     // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
     const origin = feature.geometry.coordinates.slice();
@@ -1459,7 +1461,6 @@ function initShaping(style) {
       .flatMap(g => Object.values(g.rect));
 
     // 8. Compute bounding box for collision checks
-    const scalar = layout["text-size"](zoom, feature) / ONE_EM;
     const textPadding = layout["text-padding"](zoom, feature);
     const bbox = [
       boxOrigin[0] * scalar - textPadding,
@@ -1472,7 +1473,7 @@ function initShaping(style) {
   }
 }
 
-function layoutLine(glyphs, origin, spacing) {
+function layoutLine(glyphs, origin, spacing, scalar) {
   var xCursor = origin[0];
   const y0 = origin[1];
 
@@ -1484,7 +1485,7 @@ function layoutLine(glyphs, origin, spacing) {
 
     xCursor += advance + spacing;
 
-    return [dx, dy];
+    return [dx, dy, scalar];
   });
 }
 
