@@ -33,7 +33,6 @@
   },
   "homepage": "https://github.com/GlobeletJS/tile-labeler#readme",
   "dependencies": {
-    "rbush": "^3.0.1",
     "sdf-manager": "0.0.5"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { whitespace, breakable } from "./text-utils.js";
+import { whitespace, breakable } from "./split-utils.js";
 
 export function getBreakPoints(glyphs, spacing, targetWidth) {
   const potentialLineBreaks = [];

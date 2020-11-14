@@ -1,11 +1,8 @@
-import { getGlyphInfo } from "./glyphs.js";
+import { getGlyphInfo, layoutLine, getTextBoxShift, getLineShift } from "./shaping-utils.js";
 import { measureLine, splitLines } from "./splits.js";
-import { getTextBoxShift, getLineShift } from "./text-utils.js";
-import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from 'sdf-manager';
+import { ONE_EM } from 'sdf-manager';
 
-const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
-
-export function initShaping(style) {
+export function initShaper(style) {
   const layout = style.layout;
 
   return function(feature, zoom, atlas) {
@@ -69,20 +66,4 @@ export function initShaping(style) {
 
     return { origins, deltas, rects, bbox };
   }
-}
-
-function layoutLine(glyphs, origin, spacing, scalar) {
-  var xCursor = origin[0];
-  const y0 = origin[1];
-
-  return glyphs.flatMap(g => {
-    let { left, top, advance } = g.metrics;
-
-    let dx = xCursor + left - RECT_BUFFER;
-    let dy = y0 - top - RECT_BUFFER;
-
-    xCursor += advance + spacing;
-
-    return [dx, dy, scalar];
-  });
 }

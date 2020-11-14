@@ -1,4 +1,4 @@
-import { whitespace } from "./text-utils.js";
+import { whitespace } from "./split-utils.js";
 import { getBreakPoints } from "./linebreaks.js";
 
 export function splitLines(glyphs, spacing, maxWidth) {
