@@ -8,6 +8,7 @@ export default {
     resolve(),
     commonjs(),
   ],
+  external: ['pbf'],
   output: {
     file: pkg.main,
     format: 'esm',
