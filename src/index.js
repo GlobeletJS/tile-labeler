@@ -9,6 +9,7 @@ export function initShaping(style) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
     const buffers = shaper(feature, zoom, atlas);
+    if (!buffers) return;
 
     let { origins: [x0, y0], bbox } = buffers;
     let box = {
