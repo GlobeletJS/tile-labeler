@@ -748,10 +748,11 @@ function initShaper(style) {
 function initShaping(style) {
   const shaper = initShaper(style);
 
-  return function(feature, zoom, atlas, tree) {
+  return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const buffers = shaper(feature, zoom, atlas);
+    const { z, x, y } = tileCoords;
+    const buffers = shaper(feature, z, atlas);
     if (!buffers) return;
 
     let { origins: [x0, y0], bbox } = buffers;
@@ -763,8 +764,10 @@ function initShaping(style) {
     };
 
     if (tree.collides(box)) return;
-
     tree.insert(box);
+
+    const length = buffers.origins.length / 2;
+    buffers.tileCoords = Array.from({ length }).flatMap(v => [x, y, z]);
 
     // TODO: drop if outside tile?
     return buffers;
