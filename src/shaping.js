@@ -2,9 +2,7 @@ import { getGlyphInfo, layoutLine, getTextBoxShift, getLineShift } from "./shapi
 import { measureLine, splitLines } from "./splits.js";
 import { ONE_EM } from 'sdf-manager';
 
-export function initShaper(style) {
-  const layout = style.layout;
-
+export function initShaper(layout) {
   return function(feature, zoom, atlas) {
     // For each feature, compute a list of info for each character:
     // - x0, y0  defining overall label position
@@ -43,16 +41,16 @@ export function initShaper(style) {
     // 5. Compute top left corners of the glyphs in each line,
     //    appending the font size scalar for final positioning
     const scalar = layout["text-size"](zoom, feature) / ONE_EM;
-    const deltas = lines
+    const charPos = lines
       .flatMap((l, i) => layoutLine(l, lineOrigins[i], spacing, scalar));
 
     // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
     const origin = feature.geometry.coordinates.slice();
-    const origins = lines.flat()
+    const labelPos = lines.flat()
       .flatMap(g => origin);
 
     // 7. Collect all the glyph rects
-    const rects = lines.flat()
+    const sdfRect = lines.flat()
       .flatMap(g => Object.values(g.rect));
 
     // 8. Compute bounding box for collision checks
@@ -64,6 +62,6 @@ export function initShaper(style) {
       (boxOrigin[1] + boxSize[1]) * scalar + textPadding
     ];
 
-    return { origins, deltas, rects, bbox };
+    return { labelPos, charPos, sdfRect, bbox };
   }
 }
