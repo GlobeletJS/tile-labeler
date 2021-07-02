@@ -1,5 +1,5 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs'; // Needed for pbf
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs'; // Needed for pbf
 import pkg from "../package.json";
 
 export default {
