@@ -1,6 +1,11 @@
-import { getGlyphInfo, layoutLine, getTextBoxShift, getLineShift } from "./shaping-utils.js";
+import {
+  getGlyphInfo,
+  layoutLine,
+  getTextBoxShift,
+  getLineShift
+} from "./shaping-utils.js";
 import { measureLine, splitLines } from "./splits.js";
-import { ONE_EM } from 'sdf-manager';
+import { ONE_EM } from "sdf-manager";
 
 export function initShaper(layout) {
   return function(feature, zoom, atlas) {
@@ -47,7 +52,7 @@ export function initShaper(layout) {
     // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
     const origin = feature.geometry.coordinates.slice();
     const labelPos = lines.flat()
-      .flatMap(g => origin);
+      .flatMap(() => origin);
 
     // 7. Collect all the glyph rects
     const sdfRect = lines.flat()
@@ -63,5 +68,5 @@ export function initShaper(layout) {
     ];
 
     return { labelPos, charPos, sdfRect, bbox };
-  }
+  };
 }

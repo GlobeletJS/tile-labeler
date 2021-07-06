@@ -9,7 +9,7 @@ export function splitLines(glyphs, spacing, maxWidth) {
 
   const lineCount = Math.ceil(totalWidth / maxWidth);
   if (lineCount < 1) return [];
-  
+
   const targetWidth = totalWidth / lineCount;
   const breakPoints = getBreakPoints(glyphs, spacing, targetWidth);
 

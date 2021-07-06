@@ -10,9 +10,8 @@ export function getBreakPoints(glyphs, spacing, targetWidth) {
     if (!whitespace[code]) cursor += advance + spacing;
 
     if (i == last) return;
-    if (!breakable[code] 
-      //&& !charAllowsIdeographicBreaking(code)
-    ) return;
+    // if (!breakable[code]&& !charAllowsIdeographicBreaking(code)) return;
+    if (!breakable[code]) return;
 
     let breakInfo = evaluateBreak(
       i + 1,

@@ -1,4 +1,4 @@
-import { GLYPH_PBF_BORDER, ATLAS_PADDING } from 'sdf-manager';
+import { GLYPH_PBF_BORDER, ATLAS_PADDING } from "sdf-manager";
 
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
@@ -39,19 +39,19 @@ export function getTextBoxShift(anchor) {
   // by the returned value * bounding box dimensions
   switch (anchor) {
     case "top-left":
-      return [ 0.0,  0.0];
+      return [0.0, 0.0];
     case "top-right":
-      return [-1.0,  0.0];
+      return [-1.0, 0.0];
     case "top":
-      return [-0.5,  0.0];
+      return [-0.5, 0.0];
     case "bottom-left":
-      return [ 0.0, -1.0];
+      return [0.0, -1.0];
     case "bottom-right":
       return [-1.0, -1.0];
     case "bottom":
       return [-0.5, -1.0];
     case "left":
-      return [ 0.0, -0.5];
+      return [0.0, -0.5];
     case "right":
       return [-1.0, -0.5];
     case "center":

@@ -1,7 +1,7 @@
 import Protobuf from 'pbf';
 
 class AlphaImage {
-  // See mapbox-gl-js/src/util/image.js
+  // See maplibre-gl-js/src/util/image.js
   constructor(size, data) {
     createImage(this, size, 1, data);
   }
@@ -26,7 +26,7 @@ function createImage(image, { width, height }, channels, data) {
   if (!data) {
     data = new Uint8Array(width * height * channels);
   } else if (data.length !== width * height * channels) {
-    throw new RangeError('mismatched image size');
+    throw new RangeError("mismatched image size");
   }
   return Object.assign(image, { width, height, data });
 }
@@ -34,7 +34,7 @@ function createImage(image, { width, height }, channels, data) {
 function resizeImage(image, { width, height }, channels) {
   if (width === image.width && height === image.height) return;
 
-  const size = { 
+  const size = {
     width: Math.min(image.width, width),
     height: Math.min(image.height, height),
   };
@@ -50,10 +50,10 @@ function copyImage(srcImg, dstImg, srcPt, dstPt, size, channels) {
   if (size.width === 0 || size.height === 0) return dstImg;
 
   if (outOfRange(srcPt, size, srcImg)) {
-    throw new RangeError('out of range source coordinates for image copy');
+    throw new RangeError("out of range source coordinates for image copy");
   }
   if (outOfRange(dstPt, size, dstImg)) {
-    throw new RangeError('out of range destination coordinates for image copy');
+    throw new RangeError("out of range destination coordinates for image copy");
   }
 
   const srcData = srcImg.data;
@@ -89,7 +89,7 @@ const GLYPH_PBF_BORDER = 3;
 const ONE_EM = 24;
 
 function parseGlyphPbf(data) {
-  // See mapbox-gl-js/src/style/parse_glyph_pbf.js
+  // See maplibre-gl-js/src/style/parse_glyph_pbf.js
   // Input is an ArrayBuffer, which will be read as a Uint8Array
   return new Protobuf(data).readFields(readFontstacks, []);
 }
@@ -131,8 +131,8 @@ function initGlyphCache(endpoint) {
     const first = range * 256;
     const last = first + 255;
     const href = endpoint
-      .replace('{fontstack}', font.split(" ").join("%20"))
-      .replace('{range}', first + "-" + last);
+      .replace("{fontstack}", font.split(" ").join("%20"))
+      .replace("{range}", first + "-" + last);
 
     return fetch(href)
       .then(getArrayBuffer)
@@ -142,7 +142,7 @@ function initGlyphCache(endpoint) {
 
   return function(font, code) {
     // 1. Find the 256-char block containing this code
-    if (code > 65535) throw Error('glyph codes > 65535 not supported');
+    if (code > 65535) throw Error("glyph codes > 65535 not supported");
     const range = Math.floor(code / 256);
 
     // 2. Get the Promise for the retrieval and parsing of the block
@@ -257,7 +257,7 @@ function potpack(boxes) {
 const ATLAS_PADDING = 1;
 
 function buildAtlas(fonts) {
-  // See mapbox-gl-js/src/render/glyph_atlas.js
+  // See maplibre-gl-js/src/render/glyph_atlas.js
 
   // Construct position objects (metrics and rects) for each glyph
   const positions = Object.entries(fonts)
@@ -304,7 +304,7 @@ function getPosition(glyph) {
 }
 
 function copyGlyphBitmap(glyph, positions, image) {
-  let { id, bitmap, metrics } = glyph;
+  let { id, bitmap } = glyph;
   let position = positions[id];
   if (!position) return;
 
@@ -324,7 +324,7 @@ function initGetter(urlTemplate, key) {
 
   // Put in the API key, if supplied
   const endpoint = (key)
-    ? urlTemplate.replace('{key}', key)
+    ? urlTemplate.replace("{key}", key)
     : urlTemplate;
 
   const getGlyph = initGlyphCache(endpoint);
@@ -362,12 +362,12 @@ function getTokenParser(tokenText) {
     if (!result) {
       // No tokens left. Parse the plain text after the last token
       let str = tokenText.substring(charIndex);
-      tokenFuncs.push(props => str);
+      tokenFuncs.push(() => str);
       break;
     } else if (result.index > charIndex) {
       // There is some plain text before the token
       let str = tokenText.substring(charIndex, result.index);
-      tokenFuncs.push(props => str);
+      tokenFuncs.push(() => str);
     }
 
     // Add a function to process the current token
@@ -375,7 +375,7 @@ function getTokenParser(tokenText) {
     tokenFuncs.push(props => props[token]);
     charIndex = tokenPattern.lastIndex;
   }
-  
+
   // We now have an array of functions returning either a text string or
   // a feature property
   // Return a function that assembles everything
@@ -485,19 +485,19 @@ function getTextBoxShift(anchor) {
   // by the returned value * bounding box dimensions
   switch (anchor) {
     case "top-left":
-      return [ 0.0,  0.0];
+      return [0.0, 0.0];
     case "top-right":
-      return [-1.0,  0.0];
+      return [-1.0, 0.0];
     case "top":
-      return [-0.5,  0.0];
+      return [-0.5, 0.0];
     case "bottom-left":
-      return [ 0.0, -1.0];
+      return [0.0, -1.0];
     case "bottom-right":
       return [-1.0, -1.0];
     case "bottom":
       return [-0.5, -1.0];
     case "left":
-      return [ 0.0, -0.5];
+      return [0.0, -0.5];
     case "right":
       return [-1.0, -0.5];
     case "center":
@@ -523,7 +523,7 @@ function getLineShift(justify, boxShiftX) {
 }
 
 const whitespace = {
-  // From mapbox-gl-js/src/symbol/shaping.js
+  // From maplibre-gl-js/src/symbol/shaping.js
   [0x09]: true, // tab
   [0x0a]: true, // newline
   [0x0b]: true, // vertical tab
@@ -533,17 +533,17 @@ const whitespace = {
 };
 
 const breakable = {
-  // From mapbox-gl-js/src/symbol/shaping.js
-  [0x0a]:   true, // newline
-  [0x20]:   true, // space
-  [0x26]:   true, // ampersand
-  [0x28]:   true, // left parenthesis
-  [0x29]:   true, // right parenthesis
-  [0x2b]:   true, // plus sign
-  [0x2d]:   true, // hyphen-minus
-  [0x2f]:   true, // solidus
-  [0xad]:   true, // soft hyphen
-  [0xb7]:   true, // middle dot
+  // From maplibre-gl-js/src/symbol/shaping.js
+  [0x0a]: true, // newline
+  [0x20]: true, // space
+  [0x26]: true, // ampersand
+  [0x28]: true, // left parenthesis
+  [0x29]: true, // right parenthesis
+  [0x2b]: true, // plus sign
+  [0x2d]: true, // hyphen-minus
+  [0x2f]: true, // solidus
+  [0xad]: true, // soft hyphen
+  [0xb7]: true, // middle dot
   [0x200b]: true, // zero-width space
   [0x2010]: true, // hyphen
   [0x2013]: true, // en dash
@@ -560,9 +560,8 @@ function getBreakPoints(glyphs, spacing, targetWidth) {
     if (!whitespace[code]) cursor += advance + spacing;
 
     if (i == last) return;
-    if (!breakable[code] 
-      //&& !charAllowsIdeographicBreaking(code)
-    ) return;
+    // if (!breakable[code]&& !charAllowsIdeographicBreaking(code)) return;
+    if (!breakable[code]) return;
 
     let breakInfo = evaluateBreak(
       i + 1,
@@ -643,7 +642,7 @@ function splitLines(glyphs, spacing, maxWidth) {
 
   const lineCount = Math.ceil(totalWidth / maxWidth);
   if (lineCount < 1) return [];
-  
+
   const targetWidth = totalWidth / lineCount;
   const breakPoints = getBreakPoints(glyphs, spacing, targetWidth);
 
@@ -724,7 +723,7 @@ function initShaper(layout) {
     // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
     const origin = feature.geometry.coordinates.slice();
     const labelPos = lines.flat()
-      .flatMap(g => origin);
+      .flatMap(() => origin);
 
     // 7. Collect all the glyph rects
     const sdfRect = lines.flat()
@@ -740,7 +739,7 @@ function initShaper(layout) {
     ];
 
     return { labelPos, charPos, sdfRect, bbox };
-  }
+  };
 }
 
 function initShaping(style) {
@@ -751,7 +750,7 @@ function initShaping(style) {
   const dataFuncs = [
     [paint["text-color"],   "color"],
     [paint["text-opacity"], "opacity"],
-  ].filter(([get, key]) => get.type === "property");
+  ].filter(([get]) => get.type === "property");
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
@@ -772,11 +771,11 @@ function initShaping(style) {
     tree.insert(box);
 
     const length = buffers.labelPos.length / 2;
-    buffers.tileCoords = Array.from({ length }).flatMap(v => [x, y, z]);
+    buffers.tileCoords = Array.from({ length }).flatMap(() => [x, y, z]);
 
     dataFuncs.forEach(([get, key]) => {
       let val = get(null, feature);
-      buffers[key] = Array.from({ length }).flatMap(v => val);
+      buffers[key] = Array.from({ length }).flatMap(() => val);
     });
 
     // TODO: drop if outside tile?

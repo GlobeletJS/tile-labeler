@@ -1,4 +1,4 @@
-import * as sdfManager from 'sdf-manager';
+import * as sdfManager from "sdf-manager";
 import { getTokenParser } from "./tokens.js";
 
 export function initAtlasGetter({ parsedStyles, glyphEndpoint }) {

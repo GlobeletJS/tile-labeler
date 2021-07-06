@@ -10,7 +10,7 @@ export function initShaping(style) {
   const dataFuncs = [
     [paint["text-color"],   "color"],
     [paint["text-opacity"], "opacity"],
-  ].filter(([get, key]) => get.type === "property");
+  ].filter(([get]) => get.type === "property");
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
@@ -31,11 +31,11 @@ export function initShaping(style) {
     tree.insert(box);
 
     const length = buffers.labelPos.length / 2;
-    buffers.tileCoords = Array.from({ length }).flatMap(v => [x, y, z]);
+    buffers.tileCoords = Array.from({ length }).flatMap(() => [x, y, z]);
 
     dataFuncs.forEach(([get, key]) => {
       let val = get(null, feature);
-      buffers[key] = Array.from({ length }).flatMap(v => val);
+      buffers[key] = Array.from({ length }).flatMap(() => val);
     });
 
     // TODO: drop if outside tile?

@@ -10,6 +10,8 @@ returned by [tile-mixer][].
 [tile-stencil]: https://github.com/GlobeletJS/tile-stencil
 [tile-mixer]: https://github.com/GlobeletJS/tile-mixer
 
+![tests](https://github.com/GlobeletJS/tile-labeler/actions/workflows/node.js.yml/badge.svg)
+
 ## Installation
 tile-labeler is provided as an ESM import
 ```javascript

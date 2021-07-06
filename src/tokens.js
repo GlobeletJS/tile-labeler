@@ -13,12 +13,12 @@ export function getTokenParser(tokenText) {
     if (!result) {
       // No tokens left. Parse the plain text after the last token
       let str = tokenText.substring(charIndex);
-      tokenFuncs.push(props => str);
+      tokenFuncs.push(() => str);
       break;
     } else if (result.index > charIndex) {
       // There is some plain text before the token
       let str = tokenText.substring(charIndex, result.index);
-      tokenFuncs.push(props => str);
+      tokenFuncs.push(() => str);
     }
 
     // Add a function to process the current token
@@ -26,7 +26,7 @@ export function getTokenParser(tokenText) {
     tokenFuncs.push(props => props[token]);
     charIndex = tokenPattern.lastIndex;
   }
-  
+
   // We now have an array of functions returning either a text string or
   // a feature property
   // Return a function that assembles everything
