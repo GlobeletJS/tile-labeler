@@ -28,7 +28,7 @@ function breakLines(glyphs, breakPoints) {
   let start = 0;
 
   return breakPoints.map(lineBreak => {
-    let line = glyphs.slice(start, lineBreak);
+    const line = glyphs.slice(start, lineBreak);
 
     // Trim whitespace from both ends
     while (line.length && whitespace[line[0].code]) line.shift();
@@ -40,7 +40,7 @@ function breakLines(glyphs, breakPoints) {
 }
 
 function trailingWhiteSpace(line) {
-  let len = line.length;
+  const len = line.length;
   if (!len) return false;
   return whitespace[line[len - 1].code];
 }

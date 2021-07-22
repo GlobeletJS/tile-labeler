@@ -19,8 +19,8 @@ export function initShaping(style) {
     const buffers = shaper(feature, z, atlas);
     if (!buffers) return;
 
-    let { labelPos: [x0, y0], bbox } = buffers;
-    let box = {
+    const { labelPos: [x0, y0], bbox } = buffers;
+    const box = {
       minX: x0 + bbox[0],
       minY: y0 + bbox[1],
       maxX: x0 + bbox[2],
@@ -34,7 +34,7 @@ export function initShaping(style) {
     buffers.tileCoords = Array.from({ length }).flatMap(() => [x, y, z]);
 
     dataFuncs.forEach(([get, key]) => {
-      let val = get(null, feature);
+      const val = get(null, feature);
       buffers[key] = Array.from({ length }).flatMap(() => val);
     });
 

@@ -6,14 +6,14 @@ export function getBreakPoints(glyphs, spacing, targetWidth) {
   let cursor = 0;
 
   glyphs.forEach((g, i) => {
-    let { code, metrics: { advance } } = g;
+    const { code, metrics: { advance } } = g;
     if (!whitespace[code]) cursor += advance + spacing;
 
     if (i == last) return;
     // if (!breakable[code]&& !charAllowsIdeographicBreaking(code)) return;
     if (!breakable[code]) return;
 
-    let breakInfo = evaluateBreak(
+    const breakInfo = evaluateBreak(
       i + 1,
       cursor,
       targetWidth,

@@ -4,25 +4,25 @@ export function getTokenParser(tokenText) {
 
   // We break tokenText into pieces that are either plain text or tokens,
   // then construct an array of functions to parse each piece
-  var tokenFuncs = [];
-  var charIndex  = 0;
+  const tokenFuncs = [];
+  let charIndex  = 0;
   while (charIndex < tokenText.length) {
     // Find the next token
-    let result = tokenPattern.exec(tokenText);
+    const result = tokenPattern.exec(tokenText);
 
     if (!result) {
       // No tokens left. Parse the plain text after the last token
-      let str = tokenText.substring(charIndex);
+      const str = tokenText.substring(charIndex);
       tokenFuncs.push(() => str);
       break;
     } else if (result.index > charIndex) {
       // There is some plain text before the token
-      let str = tokenText.substring(charIndex, result.index);
+      const str = tokenText.substring(charIndex, result.index);
       tokenFuncs.push(() => str);
     }
 
     // Add a function to process the current token
-    let token = result[1];
+    const token = result[1];
     tokenFuncs.push(props => props[token]);
     charIndex = tokenPattern.lastIndex;
   }
@@ -33,7 +33,7 @@ export function getTokenParser(tokenText) {
   return function(properties) {
     return tokenFuncs.reduce(concat, "");
     function concat(str, tokenFunc) {
-      let text = tokenFunc(properties) || "";
+      const text = tokenFunc(properties) || "";
       return str += text;
     }
   };

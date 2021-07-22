@@ -3,14 +3,14 @@ import { GLYPH_PBF_BORDER, ATLAS_PADDING } from "sdf-manager";
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
 export function layoutLine(glyphs, origin, spacing, scalar) {
-  var xCursor = origin[0];
+  let xCursor = origin[0];
   const y0 = origin[1];
 
   return glyphs.flatMap(g => {
-    let { left, top, advance } = g.metrics;
+    const { left, top, advance } = g.metrics;
 
-    let dx = xCursor + left - RECT_BUFFER;
-    let dy = y0 - top - RECT_BUFFER;
+    const dx = xCursor + left - RECT_BUFFER;
+    const dy = y0 - top - RECT_BUFFER;
 
     xCursor += advance + spacing;
 
@@ -25,9 +25,9 @@ export function getGlyphInfo(feature, atlas) {
   if (!positions || !charCodes || !charCodes.length) return;
 
   const info = feature.charCodes.map(code => {
-    let pos = positions[code];
+    const pos = positions[code];
     if (!pos) return;
-    let { metrics, rect } = pos;
+    const { metrics, rect } = pos;
     return { code, metrics, rect };
   });
 

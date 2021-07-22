@@ -76,7 +76,7 @@ function copyImage(srcImg, dstImg, srcPt, dstPt, size, channels) {
 }
 
 function outOfRange(point, size, image) {
-  let { width, height } = size;
+  const { width, height } = size;
   return (
     width > image.width ||
     height > image.height ||
@@ -276,7 +276,7 @@ function buildAtlas(fonts) {
   // Using the updated rects, copy all the bitmaps into one image
   const image = new AlphaImage({ width: w || 1, height: h || 1 });
   Object.entries(fonts).forEach(([font, glyphs]) => {
-    let fontPos = positions[font];
+    const fontPos = positions[font];
     glyphs.forEach(glyph => copyGlyphBitmap(glyph, fontPos, image));
   });
 
@@ -285,32 +285,32 @@ function buildAtlas(fonts) {
 
 function getPositions(glyphs) {
   return glyphs.reduce((dict, glyph) => {
-    let pos = getPosition(glyph);
+    const pos = getPosition(glyph);
     if (pos) dict[glyph.id] = pos;
     return dict;
   }, {});
 }
 
 function getPosition(glyph) {
-  let { bitmap: { width, height }, metrics } = glyph;
+  const { bitmap: { width, height }, metrics } = glyph;
   if (width === 0 || height === 0) return;
 
   // Construct a preliminary rect, positioned at the origin for now
-  let w = width + 2 * ATLAS_PADDING;
-  let h = height + 2 * ATLAS_PADDING;
-  let rect = { x: 0, y: 0, w, h };
+  const w = width + 2 * ATLAS_PADDING;
+  const h = height + 2 * ATLAS_PADDING;
+  const rect = { x: 0, y: 0, w, h };
 
   return { metrics, rect };
 }
 
 function copyGlyphBitmap(glyph, positions, image) {
-  let { id, bitmap } = glyph;
-  let position = positions[id];
+  const { id, bitmap } = glyph;
+  const position = positions[id];
   if (!position) return;
 
-  let srcPt = { x: 0, y: 0 };
-  let { x, y } = position.rect;
-  let dstPt = { x: x + ATLAS_PADDING, y: y + ATLAS_PADDING };
+  const srcPt = { x: 0, y: 0 };
+  const { x, y } = position.rect;
+  const dstPt = { x: x + ATLAS_PADDING, y: y + ATLAS_PADDING };
   AlphaImage.copy(bitmap, image, srcPt, dstPt, bitmap);
 }
 
@@ -334,7 +334,7 @@ function initGetter(urlTemplate, key) {
     const fontGlyphs = {};
 
     const promises = Object.entries(fontCodes).map(([font, codes]) => {
-      let requests = Array.from(codes, code => getGlyph(font, code));
+      const requests = Array.from(codes, code => getGlyph(font, code));
 
       return Promise.all(requests).then(glyphs => {
         fontGlyphs[font] = glyphs.filter(g => g !== undefined);
@@ -353,25 +353,25 @@ function getTokenParser(tokenText) {
 
   // We break tokenText into pieces that are either plain text or tokens,
   // then construct an array of functions to parse each piece
-  var tokenFuncs = [];
-  var charIndex  = 0;
+  const tokenFuncs = [];
+  let charIndex  = 0;
   while (charIndex < tokenText.length) {
     // Find the next token
-    let result = tokenPattern.exec(tokenText);
+    const result = tokenPattern.exec(tokenText);
 
     if (!result) {
       // No tokens left. Parse the plain text after the last token
-      let str = tokenText.substring(charIndex);
+      const str = tokenText.substring(charIndex);
       tokenFuncs.push(() => str);
       break;
     } else if (result.index > charIndex) {
       // There is some plain text before the token
-      let str = tokenText.substring(charIndex, result.index);
+      const str = tokenText.substring(charIndex, result.index);
       tokenFuncs.push(() => str);
     }
 
     // Add a function to process the current token
-    let token = result[1];
+    const token = result[1];
     tokenFuncs.push(props => props[token]);
     charIndex = tokenPattern.lastIndex;
   }
@@ -382,7 +382,7 @@ function getTokenParser(tokenText) {
   return function(properties) {
     return tokenFuncs.reduce(concat, "");
     function concat(str, tokenFunc) {
-      let text = tokenFunc(properties) || "";
+      const text = tokenFunc(properties) || "";
       return str += text;
     }
   };
@@ -449,14 +449,14 @@ function getTextTransform(code) {
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
 function layoutLine(glyphs, origin, spacing, scalar) {
-  var xCursor = origin[0];
+  let xCursor = origin[0];
   const y0 = origin[1];
 
   return glyphs.flatMap(g => {
-    let { left, top, advance } = g.metrics;
+    const { left, top, advance } = g.metrics;
 
-    let dx = xCursor + left - RECT_BUFFER;
-    let dy = y0 - top - RECT_BUFFER;
+    const dx = xCursor + left - RECT_BUFFER;
+    const dy = y0 - top - RECT_BUFFER;
 
     xCursor += advance + spacing;
 
@@ -471,9 +471,9 @@ function getGlyphInfo(feature, atlas) {
   if (!positions || !charCodes || !charCodes.length) return;
 
   const info = feature.charCodes.map(code => {
-    let pos = positions[code];
+    const pos = positions[code];
     if (!pos) return;
-    let { metrics, rect } = pos;
+    const { metrics, rect } = pos;
     return { code, metrics, rect };
   });
 
@@ -556,14 +556,14 @@ function getBreakPoints(glyphs, spacing, targetWidth) {
   let cursor = 0;
 
   glyphs.forEach((g, i) => {
-    let { code, metrics: { advance } } = g;
+    const { code, metrics: { advance } } = g;
     if (!whitespace[code]) cursor += advance + spacing;
 
     if (i == last) return;
     // if (!breakable[code]&& !charAllowsIdeographicBreaking(code)) return;
     if (!breakable[code]) return;
 
-    let breakInfo = evaluateBreak(
+    const breakInfo = evaluateBreak(
       i + 1,
       cursor,
       targetWidth,
@@ -661,7 +661,7 @@ function breakLines(glyphs, breakPoints) {
   let start = 0;
 
   return breakPoints.map(lineBreak => {
-    let line = glyphs.slice(start, lineBreak);
+    const line = glyphs.slice(start, lineBreak);
 
     // Trim whitespace from both ends
     while (line.length && whitespace[line[0].code]) line.shift();
@@ -673,7 +673,7 @@ function breakLines(glyphs, breakPoints) {
 }
 
 function trailingWhiteSpace(line) {
-  let len = line.length;
+  const len = line.length;
   if (!len) return false;
   return whitespace[line[len - 1].code];
 }
@@ -709,8 +709,8 @@ function initShaper(layout) {
     const justify = layout["text-justify"](zoom, feature);
     const lineShiftX = getLineShift(justify, boxShift[0]);
     const lineOrigins = lineWidths.map((lineWidth, i) => {
-      let x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
-      let y = i * lineHeight + boxOrigin[1];
+      const x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
+      const y = i * lineHeight + boxOrigin[1];
       return [x, y];
     });
 
@@ -759,8 +759,8 @@ function initShaping(style) {
     const buffers = shaper(feature, z, atlas);
     if (!buffers) return;
 
-    let { labelPos: [x0, y0], bbox } = buffers;
-    let box = {
+    const { labelPos: [x0, y0], bbox } = buffers;
+    const box = {
       minX: x0 + bbox[0],
       minY: y0 + bbox[1],
       maxX: x0 + bbox[2],
@@ -774,7 +774,7 @@ function initShaping(style) {
     buffers.tileCoords = Array.from({ length }).flatMap(() => [x, y, z]);
 
     dataFuncs.forEach(([get, key]) => {
-      let val = get(null, feature);
+      const val = get(null, feature);
       buffers[key] = Array.from({ length }).flatMap(() => val);
     });
 

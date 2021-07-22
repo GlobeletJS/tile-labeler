@@ -38,8 +38,8 @@ export function initShaper(layout) {
     const justify = layout["text-justify"](zoom, feature);
     const lineShiftX = getLineShift(justify, boxShift[0]);
     const lineOrigins = lineWidths.map((lineWidth, i) => {
-      let x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
-      let y = i * lineHeight + boxOrigin[1];
+      const x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
+      const y = i * lineHeight + boxOrigin[1];
       return [x, y];
     });
 
