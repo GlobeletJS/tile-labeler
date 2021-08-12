@@ -8,13 +8,14 @@ export function layoutLine(glyphs, origin, spacing, scalar) {
 
   return glyphs.flatMap(g => {
     const { left, top, advance } = g.metrics;
+    const { w, h } = g.rect;
 
     const dx = xCursor + left - RECT_BUFFER;
     const dy = y0 - top - RECT_BUFFER;
 
     xCursor += advance + spacing;
 
-    return [dx, dy, scalar];
+    return [dx, dy, w, h].map(c => c * scalar);
   });
 }
 
