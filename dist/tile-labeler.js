@@ -751,10 +751,9 @@ function initShaping(style) {
 
   const shaper = initShaper(layout);
 
-  const dataFuncs = [
-    [paint["text-color"],   "color"],
-    [paint["text-opacity"], "opacity"],
-  ].filter(([get]) => get.type === "property");
+  const styleKeys = ["text-color", "text-opacity"];
+  const dataFuncs = styleKeys.filter(k => paint[k].type === "property")
+    .map(k => ([paint[k], camelCase(k)]));
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
@@ -785,6 +784,10 @@ function initShaping(style) {
     // TODO: drop if outside tile?
     return buffers;
   };
+}
+
+function camelCase(hyphenated) {
+  return hyphenated.replace(/-([a-z])/gi, (h, c) => c.toUpperCase());
 }
 
 export { initAtlasGetter, initShaping };
