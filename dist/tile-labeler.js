@@ -1,4 +1,4 @@
-import Protobuf from 'pbf';
+import Protobuf from 'pbf-esm';
 
 class AlphaImage {
   // See maplibre-gl-js/src/util/image.js
