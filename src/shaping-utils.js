@@ -17,12 +17,18 @@ export function getGlyphInfo(feature, atlas) {
 
   if (!positions || !charCodes || !charCodes.length) return;
 
-  const info = charCodes.map(code => {
+  const { width, height } = atlas.image;
+
+  return charCodes.map(code => {
     const pos = positions[code];
     if (!pos) return;
-    const { metrics, rect } = pos;
-    return { code, metrics, rect };
-  });
 
-  return info.filter(i => i !== undefined);
+    const { left, top, advance } = pos.metrics;
+    const { x, y, w, h } = pos.rect;
+
+    const sdfRect = [x / width, y / height, w / width, h / height];
+    const metrics = { left, top, advance, w, h };
+
+    return { code, metrics, sdfRect };
+  }).filter(i => i !== undefined);
 }

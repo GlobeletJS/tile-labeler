@@ -1,16 +1,14 @@
 import { ONE_EM } from "sdf-manager";
 
 export function getTextBox(lines, styleVals) {
-  const lineHeight = styleVals["text-line-height"] * ONE_EM;
   const [sx, sy] = getTextBoxShift(styleVals["text-anchor"]);
-  const lineShiftX = getLineShift(styleVals["text-justify"], sx);
 
   const w = Math.max(...lines.map(l => l.width));
-  const h = lines.length * lineHeight;
+  const h = lines.length * styleVals["text-line-height"] * ONE_EM;
   const x = sx * w + styleVals["text-offset"][0] * ONE_EM;
   const y = sy * h + styleVals["text-offset"][1] * ONE_EM;
 
-  return { x, y, w, h, lineHeight, lineShiftX };
+  return { x, y, w, h, shiftX: sx };
 }
 
 function getTextBoxShift(anchor) {
@@ -36,21 +34,5 @@ function getTextBoxShift(anchor) {
     case "center":
     default:
       return [-0.5, -0.5];
-  }
-}
-
-function getLineShift(justify, boxShiftX) {
-  // Shift the start of the text line by the
-  // return value * (boundingBoxWidth - lineWidth)
-  switch (justify) {
-    case "auto":
-      return -boxShiftX;
-    case "left":
-      return 0;
-    case "right":
-      return 1;
-    case "center":
-    default:
-      return 0.5;
   }
 }

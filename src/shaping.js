@@ -6,45 +6,42 @@ import { ONE_EM } from "sdf-manager";
 
 export function initShaper(style) {
   return function(feature, zoom, atlas) {
-    // For each feature, compute a list of info for each character:
-    // - x0, y0  defining overall label position
-    // - dx, dy  delta positions relative to label position
-    // - x, y, w, h  defining the position of the glyph within the atlas
+    const chars = getCharacters(feature, zoom, atlas);
+    if (!chars) return;
 
-    // 1. Get the glyphs for the characters
-    const glyphs = getGlyphInfo(feature, atlas);
-    if (!glyphs) return;
+    // TODO: The below assumes Point geometry
+    const origin = [...feature.geometry.coordinates, chars.fontScalar];
+    const labelPos = chars.flatMap(() => origin);
 
-    // 2. Evaluate style properties
-    const styleVals = evaluateStyle(style, zoom, feature);
-
-    // 3. Split into lines and position the characters
-    const lines = splitLines(glyphs, styleVals);
-    // TODO: What if no labelText, or it is all whitespace?
-    const box = getTextBox(lines, styleVals);
-    const charPos = layoutLines(lines, box, styleVals);
-
-    // 4. Fill in label origins for each glyph. TODO: assumes Point geometry
-    const scalar = styleVals["text-size"] / ONE_EM;
-    const origin = [...feature.geometry.coordinates, scalar];
-    const labelPos = lines.flat().flatMap(() => origin);
-
-    // 5. Collect all the glyph rects, normalizing by atlas dimensions
-    const { width, height } = atlas.image;
-    const sdfRect = lines.flat().flatMap(g => {
-      const { x, y, w, h } = g.rect;
-      return [x / width, y / height, w / width, h / height];
-    });
-
-    // 6. Compute bounding box for collision checks
-    const textPadding = styleVals["text-padding"];
-    const bbox = [
-      box.x * scalar - textPadding,
-      box.y * scalar - textPadding,
-      (box.x + box.w) * scalar + textPadding,
-      (box.y + box.h) * scalar + textPadding
-    ];
+    const sdfRect = chars.flatMap(c => c.rect);
+    const charPos = chars.flatMap(c => c.pos);
+    const bbox = chars.bbox;
 
     return { labelPos, charPos, sdfRect, bbox };
   };
+
+  function getCharacters(feature, zoom, atlas) {
+    // Get the glyphs for the characters, and evaluate style properties
+    const glyphs = getGlyphInfo(feature, atlas);
+    if (!glyphs) return;
+    const styleVals = evaluateStyle(style, zoom, feature);
+
+    // Split into lines and position the characters
+    const lines = splitLines(glyphs, styleVals);
+    // TODO: What if no labelText, or it is all whitespace?
+    const box = getTextBox(lines, styleVals);
+    const positionedChars = layoutLines(lines, box, styleVals);
+
+    // Compute bounding box for collision checks
+    const fontScalar = styleVals["text-size"] / ONE_EM;
+    const textPadding = styleVals["text-padding"];
+    const bbox = [
+      box.x * fontScalar - textPadding,
+      box.y * fontScalar - textPadding,
+      (box.x + box.w) * fontScalar + textPadding,
+      (box.y + box.h) * fontScalar + textPadding
+    ];
+
+    return Object.assign(positionedChars, { fontScalar, bbox });
+  }
 }

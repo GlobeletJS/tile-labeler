@@ -3,12 +3,14 @@ import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from "sdf-manager";
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
 export function layoutLines(lines, box, styleVals) {
+  const lineHeight = styleVals["text-line-height"] * ONE_EM;
+  const lineShiftX = getLineShift(styleVals["text-justify"], box.shiftX);
   const spacing = styleVals["text-letter-spacing"] * ONE_EM;
   const scalar = styleVals["text-size"] / ONE_EM;
 
   return lines.flatMap((line, i) => {
-    const x = (box.w - line.width) * box.lineShiftX + box.x;
-    const y = i * box.lineHeight + box.y;
+    const x = (box.w - line.width) * lineShiftX + box.x;
+    const y = i * lineHeight + box.y;
     return layoutLine(line, [x, y], spacing, scalar);
   });
 }
@@ -17,15 +19,31 @@ function layoutLine(glyphs, origin, spacing, scalar) {
   let xCursor = origin[0];
   const y0 = origin[1];
 
-  return glyphs.flatMap(g => {
-    const { left, top, advance } = g.metrics;
-    const { w, h } = g.rect;
+  return glyphs.map(g => {
+    const { left, top, advance, w, h } = g.metrics;
 
     const dx = xCursor + left - RECT_BUFFER;
     const dy = y0 - top - RECT_BUFFER;
 
     xCursor += advance + spacing;
 
-    return [dx, dy, w, h].map(c => c * scalar);
+    const pos = [dx, dy, w, h].map(c => c * scalar);
+    const rect = g.sdfRect;
+
+    return { pos, rect };
   });
+}
+
+function getLineShift(justify, boxShiftX) {
+  switch (justify) {
+    case "auto":
+      return -boxShiftX;
+    case "left":
+      return 0;
+    case "right":
+      return 1;
+    case "center":
+    default:
+      return 0.5;
+  }
 }
