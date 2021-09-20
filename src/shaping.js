@@ -1,13 +1,10 @@
-import {
-  getGlyphInfo,
-  layoutLine,
-  getTextBoxShift,
-  getLineShift
-} from "./shaping-utils.js";
-import { measureLine, splitLines } from "./splits.js";
+import { getGlyphInfo, evaluateStyle } from "./shaping-utils.js";
+import { layoutLines } from "./layout.js";
+import { getTextBox } from "./textbox.js";
+import { splitLines } from "./splits.js";
 import { ONE_EM } from "sdf-manager";
 
-export function initShaper(layout) {
+export function initShaper(style) {
   return function(feature, zoom, atlas) {
     // For each feature, compute a list of info for each character:
     // - x0, y0  defining overall label position
@@ -18,56 +15,34 @@ export function initShaper(layout) {
     const glyphs = getGlyphInfo(feature, atlas);
     if (!glyphs) return;
 
-    // 2. Split into lines
-    const spacing = layout["text-letter-spacing"](zoom, feature) * ONE_EM;
-    const maxWidth = layout["text-max-width"](zoom, feature) * ONE_EM;
-    const lines = splitLines(glyphs, spacing, maxWidth);
+    // 2. Evaluate style properties
+    const styleVals = evaluateStyle(style, zoom, feature);
+
+    // 3. Split into lines and position the characters
+    const lines = splitLines(glyphs, styleVals);
     // TODO: What if no labelText, or it is all whitespace?
+    const box = getTextBox(lines, styleVals);
+    const charPos = layoutLines(lines, box, styleVals);
 
-    // 3. Get dimensions of lines and overall text box
-    const lineWidths = lines.map(line => measureLine(line, spacing));
-    const lineHeight = layout["text-line-height"](zoom, feature) * ONE_EM;
-
-    const boxSize = [Math.max(...lineWidths), lines.length * lineHeight];
-    const textOffset = layout["text-offset"](zoom, feature)
-      .map(c => c * ONE_EM);
-    const boxShift = getTextBoxShift( layout["text-anchor"](zoom, feature) );
-    const boxOrigin = boxShift.map((c, i) => c * boxSize[i] + textOffset[i]);
-
-    // 4. Compute origins for each line
-    const justify = layout["text-justify"](zoom, feature);
-    const lineShiftX = getLineShift(justify, boxShift[0]);
-    const lineOrigins = lineWidths.map((lineWidth, i) => {
-      const x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
-      const y = i * lineHeight + boxOrigin[1];
-      return [x, y];
-    });
-
-    // 5. Compute top left corners of the glyphs in each line,
-    //    appending the font size scalar for final positioning
-    const scalar = layout["text-size"](zoom, feature) / ONE_EM;
-    const charPos = lines
-      .flatMap((l, i) => layoutLine(l, lineOrigins[i], spacing, scalar));
-
-    // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
+    // 4. Fill in label origins for each glyph. TODO: assumes Point geometry
+    const scalar = styleVals["text-size"] / ONE_EM;
     const origin = [...feature.geometry.coordinates, scalar];
-    const labelPos = lines.flat()
-      .flatMap(() => origin);
+    const labelPos = lines.flat().flatMap(() => origin);
 
-    // 7. Collect all the glyph rects, normalizing by atlas dimensions
+    // 5. Collect all the glyph rects, normalizing by atlas dimensions
     const { width, height } = atlas.image;
     const sdfRect = lines.flat().flatMap(g => {
       const { x, y, w, h } = g.rect;
       return [x / width, y / height, w / width, h / height];
     });
 
-    // 8. Compute bounding box for collision checks
-    const textPadding = layout["text-padding"](zoom, feature);
+    // 6. Compute bounding box for collision checks
+    const textPadding = styleVals["text-padding"];
     const bbox = [
-      boxOrigin[0] * scalar - textPadding,
-      boxOrigin[1] * scalar - textPadding,
-      (boxOrigin[0] + boxSize[0]) * scalar + textPadding,
-      (boxOrigin[1] + boxSize[1]) * scalar + textPadding
+      box.x * scalar - textPadding,
+      box.y * scalar - textPadding,
+      (box.x + box.w) * scalar + textPadding,
+      (box.y + box.h) * scalar + textPadding
     ];
 
     return { labelPos, charPos, sdfRect, bbox };

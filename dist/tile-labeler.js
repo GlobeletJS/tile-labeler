@@ -446,7 +446,47 @@ function getTextTransform(code) {
   }
 }
 
+function evaluateStyle(layout, zoom, feature) {
+  return [
+    "text-letter-spacing",
+    "text-max-width",
+    "text-size",
+    "text-padding",
+    "text-line-height",
+    "text-anchor",
+    "text-offset",
+    "text-justify",
+  ].reduce((d, k) => (d[k] = layout[k](zoom, feature), d), {});
+}
+
+function getGlyphInfo(feature, atlas) {
+  const { font, charCodes } = feature;
+  const positions = atlas.positions[font];
+
+  if (!positions || !charCodes || !charCodes.length) return;
+
+  const info = charCodes.map(code => {
+    const pos = positions[code];
+    if (!pos) return;
+    const { metrics, rect } = pos;
+    return { code, metrics, rect };
+  });
+
+  return info.filter(i => i !== undefined);
+}
+
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
+
+function layoutLines(lines, box, styleVals) {
+  const spacing = styleVals["text-letter-spacing"] * ONE_EM;
+  const scalar = styleVals["text-size"] / ONE_EM;
+
+  return lines.flatMap((line, i) => {
+    const x = (box.w - line.width) * box.lineShiftX + box.x;
+    const y = i * box.lineHeight + box.y;
+    return layoutLine(line, [x, y], spacing, scalar);
+  });
+}
 
 function layoutLine(glyphs, origin, spacing, scalar) {
   let xCursor = origin[0];
@@ -465,20 +505,17 @@ function layoutLine(glyphs, origin, spacing, scalar) {
   });
 }
 
-function getGlyphInfo(feature, atlas) {
-  const { font, charCodes } = feature;
-  const positions = atlas.positions[font];
+function getTextBox(lines, styleVals) {
+  const lineHeight = styleVals["text-line-height"] * ONE_EM;
+  const [sx, sy] = getTextBoxShift(styleVals["text-anchor"]);
+  const lineShiftX = getLineShift(styleVals["text-justify"], sx);
 
-  if (!positions || !charCodes || !charCodes.length) return;
+  const w = Math.max(...lines.map(l => l.width));
+  const h = lines.length * lineHeight;
+  const x = sx * w + styleVals["text-offset"][0] * ONE_EM;
+  const y = sy * h + styleVals["text-offset"][1] * ONE_EM;
 
-  const info = feature.charCodes.map(code => {
-    const pos = positions[code];
-    if (!pos) return;
-    const { metrics, rect } = pos;
-    return { code, metrics, rect };
-  });
-
-  return info.filter(i => i !== undefined);
+  return { x, y, w, h, lineHeight, lineShiftX };
 }
 
 function getTextBoxShift(anchor) {
@@ -508,8 +545,8 @@ function getTextBoxShift(anchor) {
 }
 
 function getLineShift(justify, boxShiftX) {
-  // Shift the start of the text line (left side) by the
-  // returned value * (boundingBoxWidth - lineWidth)
+  // Shift the start of the text line by the
+  // return value * (boundingBoxWidth - lineWidth)
   switch (justify) {
     case "auto":
       return -boxShiftX;
@@ -635,30 +672,22 @@ function calculatePenalty(code, nextCode) {
   return penalty;
 }
 
-function splitLines(glyphs, spacing, maxWidth) {
-  // glyphs is an Array of Objects with properties { code, metrics, rect }
-  // spacing and maxWidth should already be scaled to the same units as
-  //   glyph.metrics.advance
+function splitLines(glyphs, styleVals) {
+  // glyphs is an Array of Objects with properties { code, metrics }
+  const spacing = styleVals["text-letter-spacing"] * ONE_EM;
   const totalWidth = measureLine(glyphs, spacing);
 
+  const maxWidth = styleVals["text-max-width"] * ONE_EM;
   const lineCount = Math.ceil(totalWidth / maxWidth);
   if (lineCount < 1) return [];
 
   const targetWidth = totalWidth / lineCount;
   const breakPoints = getBreakPoints(glyphs, spacing, targetWidth);
 
-  return breakLines(glyphs, breakPoints);
+  return breakLines(glyphs, breakPoints, spacing);
 }
 
-function measureLine(glyphs, spacing) {
-  if (glyphs.length < 1) return 0;
-
-  // No initial value for reduce--so no spacing added for 1st char
-  return glyphs.map(g => g.metrics.advance)
-    .reduce((a, c) => a + c + spacing);
-}
-
-function breakLines(glyphs, breakPoints) {
+function breakLines(glyphs, breakPoints, spacing) {
   let start = 0;
 
   return breakPoints.map(lineBreak => {
@@ -668,6 +697,7 @@ function breakLines(glyphs, breakPoints) {
     while (line.length && whitespace[line[0].code]) line.shift();
     while (trailingWhiteSpace(line)) line.pop();
 
+    line.width = measureLine(line, spacing);
     start = lineBreak;
     return line;
   });
@@ -679,7 +709,15 @@ function trailingWhiteSpace(line) {
   return whitespace[line[len - 1].code];
 }
 
-function initShaper(layout) {
+function measureLine(glyphs, spacing) {
+  if (glyphs.length < 1) return 0;
+
+  // No initial value for reduce--so no spacing added for 1st char
+  return glyphs.map(g => g.metrics.advance)
+    .reduce((a, c) => a + c + spacing);
+}
+
+function initShaper(style) {
   return function(feature, zoom, atlas) {
     // For each feature, compute a list of info for each character:
     // - x0, y0  defining overall label position
@@ -690,56 +728,34 @@ function initShaper(layout) {
     const glyphs = getGlyphInfo(feature, atlas);
     if (!glyphs) return;
 
-    // 2. Split into lines
-    const spacing = layout["text-letter-spacing"](zoom, feature) * ONE_EM;
-    const maxWidth = layout["text-max-width"](zoom, feature) * ONE_EM;
-    const lines = splitLines(glyphs, spacing, maxWidth);
+    // 2. Evaluate style properties
+    const styleVals = evaluateStyle(style, zoom, feature);
+
+    // 3. Split into lines and position the characters
+    const lines = splitLines(glyphs, styleVals);
     // TODO: What if no labelText, or it is all whitespace?
+    const box = getTextBox(lines, styleVals);
+    const charPos = layoutLines(lines, box, styleVals);
 
-    // 3. Get dimensions of lines and overall text box
-    const lineWidths = lines.map(line => measureLine(line, spacing));
-    const lineHeight = layout["text-line-height"](zoom, feature) * ONE_EM;
-
-    const boxSize = [Math.max(...lineWidths), lines.length * lineHeight];
-    const textOffset = layout["text-offset"](zoom, feature)
-      .map(c => c * ONE_EM);
-    const boxShift = getTextBoxShift( layout["text-anchor"](zoom, feature) );
-    const boxOrigin = boxShift.map((c, i) => c * boxSize[i] + textOffset[i]);
-
-    // 4. Compute origins for each line
-    const justify = layout["text-justify"](zoom, feature);
-    const lineShiftX = getLineShift(justify, boxShift[0]);
-    const lineOrigins = lineWidths.map((lineWidth, i) => {
-      const x = (boxSize[0] - lineWidth) * lineShiftX + boxOrigin[0];
-      const y = i * lineHeight + boxOrigin[1];
-      return [x, y];
-    });
-
-    // 5. Compute top left corners of the glyphs in each line,
-    //    appending the font size scalar for final positioning
-    const scalar = layout["text-size"](zoom, feature) / ONE_EM;
-    const charPos = lines
-      .flatMap((l, i) => layoutLine(l, lineOrigins[i], spacing, scalar));
-
-    // 6. Fill in label origins for each glyph. TODO: assumes Point geometry
+    // 4. Fill in label origins for each glyph. TODO: assumes Point geometry
+    const scalar = styleVals["text-size"] / ONE_EM;
     const origin = [...feature.geometry.coordinates, scalar];
-    const labelPos = lines.flat()
-      .flatMap(() => origin);
+    const labelPos = lines.flat().flatMap(() => origin);
 
-    // 7. Collect all the glyph rects, normalizing by atlas dimensions
+    // 5. Collect all the glyph rects, normalizing by atlas dimensions
     const { width, height } = atlas.image;
     const sdfRect = lines.flat().flatMap(g => {
       const { x, y, w, h } = g.rect;
       return [x / width, y / height, w / width, h / height];
     });
 
-    // 8. Compute bounding box for collision checks
-    const textPadding = layout["text-padding"](zoom, feature);
+    // 6. Compute bounding box for collision checks
+    const textPadding = styleVals["text-padding"];
     const bbox = [
-      boxOrigin[0] * scalar - textPadding,
-      boxOrigin[1] * scalar - textPadding,
-      (boxOrigin[0] + boxSize[0]) * scalar + textPadding,
-      (boxOrigin[1] + boxSize[1]) * scalar + textPadding
+      box.x * scalar - textPadding,
+      box.y * scalar - textPadding,
+      (box.x + box.w) * scalar + textPadding,
+      (box.y + box.h) * scalar + textPadding
     ];
 
     return { labelPos, charPos, sdfRect, bbox };
