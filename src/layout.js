@@ -1,18 +1,22 @@
 import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from "sdf-manager";
+import { getTextBox } from "./textbox.js";
 
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
-export function layoutLines(lines, box, styleVals) {
+export function layoutLines(lines, styleVals) {
+  const box = getTextBox(lines, styleVals);
   const lineHeight = styleVals["text-line-height"] * ONE_EM;
   const lineShiftX = getLineShift(styleVals["text-justify"], box.shiftX);
   const spacing = styleVals["text-letter-spacing"] * ONE_EM;
-  const scalar = styleVals["text-size"] / ONE_EM;
+  const fontScalar = styleVals["text-size"] / ONE_EM;
 
-  return lines.flatMap((line, i) => {
+  const chars = lines.flatMap((line, i) => {
     const x = (box.w - line.width) * lineShiftX + box.x;
     const y = i * lineHeight + box.y;
-    return layoutLine(line, [x, y], spacing, scalar);
+    return layoutLine(line, [x, y], spacing, fontScalar);
   });
+
+  return Object.assign(chars, { fontScalar, bbox: box.bbox });
 }
 
 function layoutLine(glyphs, origin, spacing, scalar) {

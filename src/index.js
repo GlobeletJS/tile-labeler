@@ -1,24 +1,20 @@
 export { initAtlasGetter } from "./atlas.js";
 
-import { initShaper } from "./shaping.js";
+import { getCharacters } from "./chars.js";
+import { initBuffers } from "./buffers.js";
 
 export function initShaping(style) {
-  const { layout, paint } = style;
-
-  const shaper = initShaper(layout);
-
-  const styleKeys = ["text-color", "text-opacity"];
-  const dataFuncs = styleKeys.filter(k => paint[k].type === "property")
-    .map(k => ([paint[k], camelCase(k)]));
+  const getBuffers = initBuffers(style.paint);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const { z, x, y } = tileCoords;
-    const buffers = shaper(feature, z, atlas);
-    if (!buffers) return;
+    const chars = getCharacters(feature, tileCoords.z, atlas, style.layout);
+    if (!chars) return;
 
-    const { labelPos: [x0, y0], bbox } = buffers;
+    const [x0, y0] = feature.geometry.coordinates;
+    const bbox = chars.bbox;
+
     const box = {
       minX: x0 + bbox[0],
       minY: y0 + bbox[1],
@@ -29,19 +25,7 @@ export function initShaping(style) {
     if (tree.collides(box)) return;
     tree.insert(box);
 
-    const length = buffers.labelPos.length / 2;
-    buffers.tileCoords = Array.from({ length }).flatMap(() => [x, y, z]);
-
-    dataFuncs.forEach(([get, key]) => {
-      const val = get(null, feature);
-      buffers[key] = Array.from({ length }).flatMap(() => val);
-    });
-
     // TODO: drop if outside tile?
-    return buffers;
+    return getBuffers(feature, chars, [x0, y0], tileCoords);
   };
-}
-
-function camelCase(hyphenated) {
-  return hyphenated.replace(/-([a-z])/gi, (h, c) => c.toUpperCase());
 }
