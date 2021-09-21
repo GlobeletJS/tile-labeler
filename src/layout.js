@@ -1,10 +1,14 @@
 import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from "sdf-manager";
+import { splitLines } from "./splits.js";
 import { getTextBox } from "./textbox.js";
 
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
-export function layoutLines(lines, styleVals) {
+export function layoutLines(glyphs, styleVals) {
+  // TODO: what if splitLines returns nothing?
+  const lines = splitLines(glyphs, styleVals);
   const box = getTextBox(lines, styleVals);
+
   const lineHeight = styleVals["text-line-height"] * ONE_EM;
   const lineShiftX = getLineShift(styleVals["text-justify"], box.shiftX);
   const spacing = styleVals["text-letter-spacing"] * ONE_EM;

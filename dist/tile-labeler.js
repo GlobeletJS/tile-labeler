@@ -446,6 +446,64 @@ function getTextTransform(code) {
   }
 }
 
+function initStyle({ layout, paint }) {
+  const layoutKeys = [
+    "text-letter-spacing",
+    "text-max-width",
+    "text-size",
+    "text-padding",
+    "text-line-height",
+    "text-anchor",
+    "text-offset",
+    "text-justify",
+  ];
+
+  const paintKeys = [
+    "text-color",
+    "text-opacity",
+  ];
+
+  const bufferFuncs = paintKeys
+    .filter(k => paint[k].type === "property")
+    .map(k => ([paint[k], camelCase(k)]));
+
+  return function(zoom, feature) {
+    const layoutVals = layoutKeys
+      .reduce((d, k) => (d[k] = layout[k](zoom, feature), d), {});
+
+    const bufferVals = bufferFuncs
+      .reduce((d, [f, k]) => (d[k] = f(zoom, feature), d), {});
+
+    return { layoutVals, bufferVals };
+  };
+}
+
+function camelCase(hyphenated) {
+  return hyphenated.replace(/-([a-z])/gi, (h, c) => c.toUpperCase());
+}
+
+function getGlyphInfo(feature, atlas) {
+  const { font, charCodes } = feature;
+  const positions = atlas.positions[font];
+
+  if (!positions || !charCodes || !charCodes.length) return;
+
+  const { width, height } = atlas.image;
+
+  return charCodes.map(code => {
+    const pos = positions[code];
+    if (!pos) return;
+
+    const { left, top, advance } = pos.metrics;
+    const { x, y, w, h } = pos.rect;
+
+    const sdfRect = [x / width, y / height, w / width, h / height];
+    const metrics = { left, top, advance, w, h };
+
+    return { code, metrics, sdfRect };
+  }).filter(i => i !== undefined);
+}
+
 const whitespace = {
   // From maplibre-gl-js/src/symbol/shaping.js
   [0x09]: true, // tab
@@ -653,8 +711,11 @@ function getTextBoxShift(anchor) {
 
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
-function layoutLines(lines, styleVals) {
+function layoutLines(glyphs, styleVals) {
+  // TODO: what if splitLines returns nothing?
+  const lines = splitLines(glyphs, styleVals);
   const box = getTextBox(lines, styleVals);
+
   const lineHeight = styleVals["text-line-height"] * ONE_EM;
   const lineShiftX = getLineShift(styleVals["text-justify"], box.shiftX);
   const spacing = styleVals["text-letter-spacing"] * ONE_EM;
@@ -702,90 +763,35 @@ function getLineShift(justify, boxShiftX) {
   }
 }
 
-function getCharacters(feature, zoom, atlas, style) {
-  // Get the glyphs for the characters, and evaluate style properties
-  const glyphs = getGlyphInfo(feature, atlas);
-  if (!glyphs) return;
-  const styleVals = evaluateStyle(style, zoom, feature);
+function getBuffers(chars, anchor, tileCoord, bufferVals) {
+  const origin = [...anchor, chars.fontScalar];
+  const { z, x, y } = tileCoord;
 
-  // Split into lines and position the characters
-  const lines = splitLines(glyphs, styleVals);
-  // TODO: What if no labelText, or it is all whitespace?
-  return layoutLines(lines, styleVals);
-}
-
-function getGlyphInfo(feature, atlas) {
-  const { font, charCodes } = feature;
-  const positions = atlas.positions[font];
-
-  if (!positions || !charCodes || !charCodes.length) return;
-
-  const { width, height } = atlas.image;
-
-  return charCodes.map(code => {
-    const pos = positions[code];
-    if (!pos) return;
-
-    const { left, top, advance } = pos.metrics;
-    const { x, y, w, h } = pos.rect;
-
-    const sdfRect = [x / width, y / height, w / width, h / height];
-    const metrics = { left, top, advance, w, h };
-
-    return { code, metrics, sdfRect };
-  }).filter(i => i !== undefined);
-}
-
-function evaluateStyle(layout, zoom, feature) {
-  return [
-    "text-letter-spacing",
-    "text-max-width",
-    "text-size",
-    "text-padding",
-    "text-line-height",
-    "text-anchor",
-    "text-offset",
-    "text-justify",
-  ].reduce((d, k) => (d[k] = layout[k](zoom, feature), d), {});
-}
-
-function initBuffers(paint) {
-  const styleKeys = ["text-color", "text-opacity"];
-  const dataFuncs = styleKeys.filter(k => paint[k].type === "property")
-    .map(k => ([paint[k], camelCase(k)]));
-
-  return function(feature, chars, anchor, tileCoord) {
-    const origin = [...anchor, chars.fontScalar];
-    const { z, x, y } = tileCoord;
-
-    const buffers = {
-      sdfRect: chars.flatMap(c => c.rect),
-      charPos: chars.flatMap(c => c.pos),
-      labelPos: chars.flatMap(() => origin),
-      tileCoords: chars.flatMap(() => [x, y, z]),
-    };
-
-    dataFuncs.forEach(([get, key]) => {
-      const val = get(null, feature);
-      buffers[key] = chars.flatMap(() => val);
-    });
-
-    return buffers;
+  const buffers = {
+    sdfRect: chars.flatMap(c => c.rect),
+    charPos: chars.flatMap(c => c.pos),
+    labelPos: chars.flatMap(() => origin),
+    tileCoords: chars.flatMap(() => [x, y, z]),
   };
-}
 
-function camelCase(hyphenated) {
-  return hyphenated.replace(/-([a-z])/gi, (h, c) => c.toUpperCase());
+  Object.entries(bufferVals).forEach(([key, val]) => {
+    buffers[key] = chars.flatMap(() => val);
+  });
+
+  return buffers;
 }
 
 function initShaping(style) {
-  const getBuffers = initBuffers(style.paint);
+  const getStyleVals = initStyle(style);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const chars = getCharacters(feature, tileCoords.z, atlas, style.layout);
-    if (!chars) return;
+    const glyphs = getGlyphInfo(feature, atlas);
+    if (!glyphs) return;
+
+    const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
+    const chars = layoutLines(glyphs, layoutVals);
 
     const [x0, y0] = feature.geometry.coordinates;
     const bbox = chars.bbox;
@@ -801,7 +807,7 @@ function initShaping(style) {
     tree.insert(box);
 
     // TODO: drop if outside tile?
-    return getBuffers(feature, chars, [x0, y0], tileCoords);
+    return getBuffers(chars, [x0, y0], tileCoords, bufferVals);
   };
 }
 

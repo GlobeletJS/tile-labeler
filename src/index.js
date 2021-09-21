@@ -1,16 +1,21 @@
 export { initAtlasGetter } from "./atlas.js";
 
-import { getCharacters } from "./chars.js";
-import { initBuffers } from "./buffers.js";
+import { initStyle } from "./style.js";
+import { getGlyphInfo } from "./glyphs.js";
+import { layoutLines } from "./layout.js";
+import { getBuffers } from "./buffers.js";
 
 export function initShaping(style) {
-  const getBuffers = initBuffers(style.paint);
+  const getStyleVals = initStyle(style);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const chars = getCharacters(feature, tileCoords.z, atlas, style.layout);
-    if (!chars) return;
+    const glyphs = getGlyphInfo(feature, atlas);
+    if (!glyphs) return;
+
+    const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
+    const chars = layoutLines(glyphs, layoutVals);
 
     const [x0, y0] = feature.geometry.coordinates;
     const bbox = chars.bbox;
@@ -26,6 +31,6 @@ export function initShaping(style) {
     tree.insert(box);
 
     // TODO: drop if outside tile?
-    return getBuffers(feature, chars, [x0, y0], tileCoords);
+    return getBuffers(chars, [x0, y0], tileCoords, bufferVals);
   };
 }
