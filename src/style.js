@@ -8,6 +8,8 @@ export function initStyle({ layout, paint }) {
     "text-anchor",
     "text-offset",
     "text-justify",
+    "symbol-placement",
+    "symbol-spacing",
   ];
 
   const paintKeys = [

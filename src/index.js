@@ -3,6 +3,8 @@ export { initAtlasGetter } from "./atlas.js";
 import { initStyle } from "./style.js";
 import { getGlyphInfo } from "./glyphs.js";
 import { layoutLines } from "./layout.js";
+import { lineCollision, pointCollision } from "./collision.js";
+import { getAnchors } from "./anchors.js";
 import { getBuffers } from "./buffers.js";
 
 export function initShaping(style) {
@@ -17,20 +19,26 @@ export function initShaping(style) {
     const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
     const chars = layoutLines(glyphs, layoutVals);
 
-    const [x0, y0] = feature.geometry.coordinates;
-    const bbox = chars.bbox;
+    const collides = (layoutVals["symbol-placement"] === "line")
+      ? lineCollision
+      : pointCollision;
 
-    const box = {
-      minX: x0 + bbox[0],
-      minY: y0 + bbox[1],
-      maxX: x0 + bbox[2],
-      maxY: y0 + bbox[3],
-    };
+    // TODO: get extent from tile?
+    const anchors = getAnchors(feature.geometry, 512, chars, layoutVals)
+      .filter(anchor => !collides(chars, anchor, tree));
 
-    if (tree.collides(box)) return;
-    tree.insert(box);
+    if (!anchors || !anchors.length) return;
 
-    // TODO: drop if outside tile?
-    return getBuffers(chars, [x0, y0], tileCoords, bufferVals);
+    return anchors
+      .map(anchor => getBuffers(chars, anchor, tileCoords, bufferVals))
+      .reduce(combineBuffers);
   };
+}
+
+function combineBuffers(dict, buffers) {
+  Object.keys(dict).forEach(k => {
+    const base = dict[k];
+    buffers[k].forEach(v => base.push(v));
+  });
+  return dict;
 }

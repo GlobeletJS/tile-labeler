@@ -11,10 +11,8 @@ export function initAtlasGetter({ parsedStyles, glyphEndpoint }) {
   return function(layers, zoom) {
     const fonts = Object.entries(layers).reduce((d, [id, layer]) => {
       const getCharCodes = textGetters[id];
-      if (!getCharCodes) return d;
-
       // NOTE: MODIFIES layer.features IN PLACE
-      layer.features.forEach(f => getCharCodes(f, zoom, d));
+      if (getCharCodes) layer.features.forEach(f => getCharCodes(f, zoom, d));
       return d;
     }, {});
 
@@ -22,9 +20,7 @@ export function initAtlasGetter({ parsedStyles, glyphEndpoint }) {
   };
 }
 
-function initTextGetter(style) {
-  const layout = style.layout;
-
+function initTextGetter({ layout }) {
   return function(feature, zoom, fonts) {
     // Get the label text from feature properties
     const textField = layout["text-field"](zoom, feature);
