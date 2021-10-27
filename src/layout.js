@@ -31,7 +31,9 @@ function layoutLine(glyphs, origin, spacing, scalar) {
     const { left, top, advance, w, h } = g.metrics;
 
     const dx = xCursor + left - RECT_BUFFER;
-    const dy = y0 - top - RECT_BUFFER;
+    // A 2.5 pixel shift in Y is needed to match MapLibre results
+    // TODO: figure out why???
+    const dy = y0 - top - RECT_BUFFER - 2.5;
 
     xCursor += advance + spacing;
 
