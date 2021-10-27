@@ -6,9 +6,13 @@ Feature layout is guided by a [MapLibre style document][MapLibre], as parsed by
 [tile-stencil][]. The returned buffers are consistent with the format
 returned by [tile-mixer][].
 
+See the [simple test][] plotting computed character positions over a
+pre-rendered tile.
+
 [MapLibre]: https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#symbol
 [tile-stencil]: https://github.com/GlobeletJS/tile-stencil
 [tile-mixer]: https://github.com/GlobeletJS/tile-mixer
+[simple test]: https://globeletjs.github.io/tile-labeler/examples/maptiler-basic/
 
 ![tests](https://github.com/GlobeletJS/tile-labeler/actions/workflows/node.js.yml/badge.svg)
 

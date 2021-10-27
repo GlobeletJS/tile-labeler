@@ -6,11 +6,15 @@ export function splitLines(glyphs, styleVals) {
   // glyphs is an Array of Objects with properties { code, metrics }
   const spacing = styleVals["text-letter-spacing"] * ONE_EM;
   const totalWidth = measureLine(glyphs, spacing);
+  if (totalWidth == 0.0) return [];
 
   const maxWidth = styleVals["text-max-width"] * ONE_EM;
-  const lineCount = Math.ceil(totalWidth / maxWidth);
-  if (lineCount < 1) return [];
+  const placement = styleVals["symbol-placement"];
+  const lineCount = (placement === "point" && maxWidth > 0)
+    ? Math.ceil(totalWidth / maxWidth)
+    : 1;
 
+  // TODO: skip break calculations if lineCount == 1
   const targetWidth = totalWidth / lineCount;
   const breakPoints = getBreakPoints(glyphs, spacing, targetWidth);
 

@@ -8,6 +8,7 @@ export function initStyle({ layout, paint }) {
     "text-anchor",
     "text-offset",
     "text-justify",
+    "text-rotation-alignment",
     "symbol-placement",
     "symbol-spacing",
   ];
