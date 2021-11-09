@@ -1,16 +1,21 @@
 export function initStyle({ layout, paint }) {
   const layoutKeys = [
-    "text-letter-spacing",
-    "text-max-width",
-    "text-size",
-    "text-padding",
-    "text-line-height",
-    "text-anchor",
-    "text-offset",
-    "text-justify",
-    "text-rotation-alignment",
+    "icon-anchor",
+    "icon-offset",
+    "icon-padding",
+    "icon-rotation-alignment",
+    "icon-size",
     "symbol-placement",
     "symbol-spacing",
+    "text-anchor",
+    "text-justify",
+    "text-letter-spacing",
+    "text-line-height",
+    "text-max-width",
+    "text-offset",
+    "text-padding",
+    "text-rotation-alignment",
+    "text-size",
   ];
 
   const paintKeys = [

@@ -388,45 +388,31 @@ function getTokenParser(tokenText) {
   };
 }
 
-function initAtlasGetter({ parsedStyles, glyphEndpoint }) {
-  const getAtlas = initGetter(glyphEndpoint);
+function initPreprocessor({ layout }) {
+  const styleKeys = [
+    "text-field",
+    "text-transform",
+    "text-font",
+    "icon-image",
+  ];
 
-  const textGetters = parsedStyles
-    .filter(s => s.type === "symbol")
-    .reduce((d, s) => (d[s.id] = initTextGetter(s), d), {});
+  return function(feature, zoom) {
+    const styleVals = styleKeys
+      .reduce((d, k) => (d[k] = layout[k](zoom, feature), d), {});
+    const { properties } = feature;
 
-  return function(layers, zoom) {
-    const fonts = Object.entries(layers).reduce((d, [id, layer]) => {
-      const getCharCodes = textGetters[id];
-      // NOTE: MODIFIES layer.features IN PLACE
-      if (getCharCodes) layer.features.forEach(f => getCharCodes(f, zoom, d));
-      return d;
-    }, {});
+    const spriteID = getTokenParser(styleVals["icon-image"])(properties);
+    const text = getTokenParser(styleVals["text-field"])(properties);
+    const haveText = (typeof text === "string" && text.length > 0);
 
-    return getAtlas(fonts);
-  };
-}
+    if (!haveText && spriteID === undefined) return;
 
-function initTextGetter({ layout }) {
-  return function(feature, zoom, fonts) {
-    // Get the label text from feature properties
-    const textField = layout["text-field"](zoom, feature);
-    const text = getTokenParser(textField)(feature.properties);
-    if (!text) return;
+    if (!haveText) return Object.assign(feature, { spriteID });
 
-    // Apply the text transform, and convert to character codes
-    const transformCode = layout["text-transform"](zoom, feature);
-    const transformedText = getTextTransform(transformCode)(text);
-    const charCodes = transformedText.split("").map(c => c.charCodeAt(0));
-    if (!charCodes.length) return;
-
-    // Update the set of character codes for the appropriate font
-    const font = layout["text-font"](zoom, feature);
-    const charSet = fonts[font] || (fonts[font] = new Set());
-    charCodes.forEach(charSet.add, charSet);
-
-    // Add font name and character codes to the feature (MODIFY IN PLACE!)
-    Object.assign(feature, { font, charCodes });
+    const labelText = getTextTransform(styleVals["text-transform"])(text);
+    const charCodes = labelText.split("").map(c => c.charCodeAt(0));
+    const font = styleVals["text-font"];
+    return Object.assign(feature, { spriteID, charCodes, font });
   };
 }
 
@@ -442,19 +428,56 @@ function getTextTransform(code) {
   }
 }
 
+function initAtlasGetter({ parsedStyles, glyphEndpoint }) {
+  const getAtlas = initGetter(glyphEndpoint);
+
+  const preprocessors = parsedStyles
+    .filter(s => s.type === "symbol")
+    .reduce((d, s) => (d[s.id] = initPreprocessor(s), d), {});
+
+  return function(layers, zoom) {
+    // Add character codes and sprite IDs. MODIFIES layer.features IN PLACE
+    Object.entries(layers).forEach(([id, layer]) => {
+      const preprocessor = preprocessors[id];
+      if (!preprocessor) return;
+      layer.features = layer.features.map(f => preprocessor(f, zoom))
+        .filter(f => f !== undefined);
+    });
+
+    const fonts = Object.values(layers)
+      .flatMap(l => l.features)
+      .filter(f => (f.charCodes && f.charCodes.length))
+      .reduce(updateFonts, {});
+
+    return getAtlas(fonts);
+  };
+}
+
+function updateFonts(fonts, feature) {
+  const { font, charCodes } = feature;
+  const charSet = fonts[font] || (fonts[font] = new Set());
+  charCodes.forEach(charSet.add, charSet);
+  return fonts;
+}
+
 function initStyle({ layout, paint }) {
   const layoutKeys = [
-    "text-letter-spacing",
-    "text-max-width",
-    "text-size",
-    "text-padding",
-    "text-line-height",
-    "text-anchor",
-    "text-offset",
-    "text-justify",
-    "text-rotation-alignment",
+    "icon-anchor",
+    "icon-offset",
+    "icon-padding",
+    "icon-rotation-alignment",
+    "icon-size",
     "symbol-placement",
     "symbol-spacing",
+    "text-anchor",
+    "text-justify",
+    "text-letter-spacing",
+    "text-line-height",
+    "text-max-width",
+    "text-offset",
+    "text-padding",
+    "text-rotation-alignment",
+    "text-size",
   ];
 
   const paintKeys = [
@@ -481,15 +504,30 @@ function camelCase(hyphenated) {
   return hyphenated.replace(/-([a-z])/gi, (h, c) => c.toUpperCase());
 }
 
-function getGlyphInfo(feature, atlas) {
-  const { font, charCodes } = feature;
-  const positions = atlas.positions[font];
+function getSprite(feature, spriteData) {
+  if (!spriteData) return;
+  const { image: { width = 0, height = 0 }, meta = {} } = spriteData;
+  if (!width || !height) return;
 
+  const { spriteID } = feature;
+  const rawRect = meta[spriteID];
+  if (!rawRect) return;
+
+  const { x, y, width: w, height: h } = rawRect;
+  const spriteRect = [x / width, y / height, w / width, h / height];
+  const metrics = { w, h };
+
+  return { spriteID, metrics, spriteRect };
+}
+
+function getGlyphs(feature, atlas) {
+  const { charCodes, font } = feature;
+  const positions = atlas.positions[font];
   if (!positions || !charCodes || !charCodes.length) return;
 
   const { width, height } = atlas.image;
 
-  return charCodes.map(code => {
+  const glyphs = charCodes.map(code => {
     const pos = positions[code];
     if (!pos) return;
 
@@ -501,6 +539,8 @@ function getGlyphInfo(feature, atlas) {
 
     return { code, metrics, sdfRect };
   }).filter(i => i !== undefined);
+
+  if (glyphs.length) return glyphs;
 }
 
 const whitespace = {
@@ -665,30 +705,32 @@ function measureLine(glyphs, spacing) {
 }
 
 function getTextBox(lines, styleVals) {
-  const [sx, sy] = getTextBoxShift(styleVals["text-anchor"]);
-
   // Get dimensions and relative position of text area in glyph pixels
   const w = Math.max(...lines.map(l => l.width));
   const h = lines.length * styleVals["text-line-height"] * ONE_EM;
+
+  const [sx, sy] = getBoxShift(styleVals["text-anchor"]);
   const x = sx * w + styleVals["text-offset"][0] * ONE_EM;
   const y = sy * h + styleVals["text-offset"][1] * ONE_EM;
 
-  // Get total bounding box after scale and pad
   const scale = styleVals["text-size"] / ONE_EM;
   const pad = styleVals["text-padding"];
-  const bbox = [
+  const bbox = scalePadBox(scale, pad, x, y, w, h);
+
+  return { x, y, w, h, shiftX: sx, bbox };
+}
+
+function scalePadBox(scale, pad, x, y, w, h) {
+  return [
     x * scale - pad,
     y * scale - pad,
     (x + w) * scale + pad,
     (y + h) * scale + pad,
   ];
-
-  return { x, y, w, h, shiftX: sx, bbox };
 }
 
-function getTextBoxShift(anchor) {
-  // Shift the top-left corner of the text bounding box
-  // by the returned value * bounding box dimensions
+function getBoxShift(anchor) {
+  // Shift the top-left corner of the box by the returned value * box dimensions
   switch (anchor) {
     case "top-left":
       return [0.0, 0.0];
@@ -1010,17 +1052,19 @@ function getBuffers(chars, anchor, tileCoord, bufferVals) {
   return buffers;
 }
 
-function initShaping(style) {
+function initShaping(style, spriteData) {
   const getStyleVals = initStyle(style);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const glyphs = getGlyphInfo(feature, atlas);
-    if (!glyphs) return;
+    const sprite = getSprite(feature, spriteData);
+    const glyphs = getGlyphs(feature, atlas);
+    if (!sprite && !glyphs) return;
 
     const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
     const chars = layoutLines(glyphs, layoutVals);
+    // const icon = layoutSprite(sprite, layoutVals);
 
     const collides = (layoutVals["symbol-placement"] === "line")
       ? lineCollision

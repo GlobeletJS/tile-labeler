@@ -1,23 +1,25 @@
 export { initAtlasGetter } from "./atlas.js";
 
 import { initStyle } from "./style.js";
-import { getGlyphInfo } from "./glyphs.js";
+import { getSprite, getGlyphs } from "./glyphs.js";
 import { layoutLines } from "./layout.js";
 import { lineCollision, pointCollision } from "./collision.js";
 import { getAnchors } from "./anchors.js";
 import { getBuffers } from "./buffers.js";
 
-export function initShaping(style) {
+export function initShaping(style, spriteData) {
   const getStyleVals = initStyle(style);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const glyphs = getGlyphInfo(feature, atlas);
-    if (!glyphs) return;
+    const sprite = getSprite(feature, spriteData);
+    const glyphs = getGlyphs(feature, atlas);
+    if (!sprite && !glyphs) return;
 
     const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
     const chars = layoutLines(glyphs, layoutVals);
+    // const icon = layoutSprite(sprite, layoutVals);
 
     const collides = (layoutVals["symbol-placement"] === "line")
       ? lineCollision

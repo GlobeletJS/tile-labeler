@@ -81,12 +81,16 @@ Returns a function that constructs WebGL buffers for valid label features.
 
 ### Syntax
 ```javascript
-const shaper = tileLabeler.initShaping(style);
+const shaper = tileLabeler.initShaping(style, spriteData);
 ```
 
 ### Arguments
 - `style`: A 'symbol' layer from a [MapLibre style document][MapLibre], with 
   the `.layout` property parsed into value getters by [tile-stencil][].
+- `spriteData`: The data retrieved by [tile-stencil][] from the URL described
+  in the [sprite property of the style document][sprite]
+
+[sprite]: https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/
 
 ### API
 The returned shaper function has the following signature:
