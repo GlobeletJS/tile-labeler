@@ -1,36 +1,41 @@
 import { ONE_EM } from "sdf-manager";
 
 export function getTextBox(lines, styleVals) {
+  const { textLineHeight, textSize,
+    textAnchor, textOffset, textPadding } = styleVals;
+
   // Get dimensions and relative position of text area in glyph pixels
   const w = Math.max(...lines.map(l => l.width));
-  const h = lines.length * styleVals["text-line-height"] * ONE_EM;
+  const h = lines.length * textLineHeight * ONE_EM;
 
-  const [sx, sy] = getBoxShift(styleVals["text-anchor"]);
-  const x = sx * w + styleVals["text-offset"][0] * ONE_EM;
-  const y = sy * h + styleVals["text-offset"][1] * ONE_EM;
+  const offset = textOffset.map(c => c * ONE_EM);
+  const { x, y, sx } = getCorner(w, h, textAnchor, offset);
 
-  const scale = styleVals["text-size"] / ONE_EM;
-  const pad = styleVals["text-padding"];
-  const bbox = scalePadBox(scale, pad, x, y, w, h);
+  const bbox = scalePadBox(textSize / ONE_EM, textPadding, x, y, w, h);
 
   return { x, y, w, h, shiftX: sx, bbox };
 }
 
 export function getIconBox(sprite, styleVals) {
   if (!sprite) return;
+
+  const { iconAnchor, iconOffset, iconSize, iconPadding } = styleVals;
   const { metrics: { w, h }, spriteRect } = sprite;
 
-  const [sx, sy] = getBoxShift(styleVals["icon-anchor"]);
-  const x = sx * w + styleVals["icon-offset"][0];
-  const y = sy * h + styleVals["icon-offset"][1];
+  const { x, y } = getCorner(w, h, iconAnchor, iconOffset);
 
-  const scale = styleVals["icon-size"];
-  const pad = styleVals["icon-padding"];
-  const bbox = scalePadBox(scale, pad, x, y, w, h);
+  const bbox = scalePadBox(iconSize, iconPadding, x, y, w, h);
 
-  const pos = [x, y, w, h].map(c => c * scale);
+  const pos = [x, y, w, h].map(c => c * iconSize);
 
   return { pos, rect: spriteRect, bbox };
+}
+
+function getCorner(w, h, anchor, offset) {
+  const [sx, sy] = getBoxShift(anchor);
+  const x = sx * w + offset[0];
+  const y = sy * h + offset[1];
+  return { x, y, sx };
 }
 
 function scalePadBox(scale, pad, x, y, w, h) {

@@ -4,14 +4,13 @@ import { getBreakPoints } from "./linebreaks.js";
 
 export function splitLines(glyphs, styleVals) {
   // glyphs is an Array of Objects with properties { code, metrics }
-  const spacing = styleVals["text-letter-spacing"] * ONE_EM;
+  const { textLetterSpacing, textMaxWidth, symbolPlacement } = styleVals;
+  const spacing = textLetterSpacing * ONE_EM;
   const totalWidth = measureLine(glyphs, spacing);
   if (totalWidth == 0.0) return [];
 
-  const maxWidth = styleVals["text-max-width"] * ONE_EM;
-  const placement = styleVals["symbol-placement"];
-  const lineCount = (placement === "point" && maxWidth > 0)
-    ? Math.ceil(totalWidth / maxWidth)
+  const lineCount = (symbolPlacement === "point" && textMaxWidth > 0)
+    ? Math.ceil(totalWidth / textMaxWidth / ONE_EM)
     : 1;
 
   // TODO: skip break calculations if lineCount == 1

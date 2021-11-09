@@ -1,7 +1,7 @@
 import { placeLineAnchors } from "./line-anchor.js";
 
 export function getAnchors(geometry, extent, chars, layoutVals) {
-  switch (layoutVals["symbol-placement"]) {
+  switch (layoutVals.symbolPlacement) {
     case "point":
       return getPointAnchors(geometry);
     case "line":

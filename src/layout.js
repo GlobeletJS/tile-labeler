@@ -9,10 +9,10 @@ export function layoutLines(glyphs, styleVals) {
   const lines = splitLines(glyphs, styleVals);
   const box = getTextBox(lines, styleVals);
 
-  const lineHeight = styleVals["text-line-height"] * ONE_EM;
-  const lineShiftX = getLineShift(styleVals["text-justify"], box.shiftX);
-  const spacing = styleVals["text-letter-spacing"] * ONE_EM;
-  const fontScalar = styleVals["text-size"] / ONE_EM;
+  const lineHeight = styleVals.textLineHeight * ONE_EM;
+  const lineShiftX = getLineShift(styleVals.textJustify, box.shiftX);
+  const spacing = styleVals.textLetterSpacing * ONE_EM;
+  const fontScalar = styleVals.textSize / ONE_EM;
 
   const chars = lines.flatMap((line, i) => {
     const x = (box.w - line.width) * lineShiftX + box.x;

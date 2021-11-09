@@ -18,6 +18,9 @@ export function initStyle({ layout, paint }) {
     "text-size",
   ];
 
+  const layoutFuncs = layoutKeys
+    .map(k => ([camelCase(k), layout[k]]));
+
   const paintKeys = [
     "text-color",
     "text-opacity",
@@ -25,14 +28,14 @@ export function initStyle({ layout, paint }) {
 
   const bufferFuncs = paintKeys
     .filter(k => paint[k].type === "property")
-    .map(k => ([paint[k], camelCase(k)]));
+    .map(k => ([camelCase(k), paint[k]]));
 
   return function(zoom, feature) {
-    const layoutVals = layoutKeys
-      .reduce((d, k) => (d[k] = layout[k](zoom, feature), d), {});
+    const layoutVals = layoutFuncs
+      .reduce((d, [k, f]) => (d[k] = f(zoom, feature), d), {});
 
     const bufferVals = bufferFuncs
-      .reduce((d, [f, k]) => (d[k] = f(zoom, feature), d), {});
+      .reduce((d, [k, f]) => (d[k] = f(zoom, feature), d), {});
 
     return { layoutVals, bufferVals };
   };

@@ -21,7 +21,7 @@ export function initShaping(style, spriteData) {
     const chars = layoutLines(glyphs, layoutVals);
     // const icon = layoutSprite(sprite, layoutVals);
 
-    const collides = (layoutVals["symbol-placement"] === "line")
+    const collides = (layoutVals.symbolPlacement === "line")
       ? lineCollision
       : pointCollision;
 
