@@ -2,8 +2,8 @@ export { initAtlasGetter } from "./atlas.js";
 
 import { initStyle } from "./style.js";
 import { getSprite, getGlyphs } from "./glyphs.js";
-import { layoutLines } from "./layout.js";
-import { lineCollision, pointCollision } from "./collision.js";
+import { layout } from "./layout.js";
+import { buildCollider } from "./collision.js";
 import { getAnchors } from "./anchors.js";
 import { getBuffers } from "./buffers.js";
 
@@ -18,12 +18,10 @@ export function initShaping(style, spriteData) {
     if (!sprite && !glyphs) return;
 
     const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
-    const chars = layoutLines(glyphs, layoutVals);
+    const chars = layout(glyphs, sprite, layoutVals);
     // const icon = layoutSprite(sprite, layoutVals);
 
-    const collides = (layoutVals.symbolPlacement === "line")
-      ? lineCollision
-      : pointCollision;
+    const collides = buildCollider(layoutVals.symbolPlacement);
 
     // TODO: get extent from tile?
     const anchors = getAnchors(feature.geometry, 512, chars, layoutVals)

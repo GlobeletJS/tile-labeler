@@ -1,59 +1,37 @@
-import { GLYPH_PBF_BORDER, ATLAS_PADDING, ONE_EM } from "sdf-manager";
 import { splitLines } from "./splits.js";
-import { getTextBox } from "./textbox.js";
+import { ONE_EM } from "sdf-manager";
+import { getBox, scalePadBox } from "./boxes.js";
+import { layoutLines } from "./layout-text.js";
 
-const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
-
-export function layoutLines(glyphs, styleVals) {
+export function layout(glyphs, sprite, styleVals) {
+  // Split text into lines
   // TODO: what if splitLines returns nothing?
   const lines = splitLines(glyphs, styleVals);
-  const box = getTextBox(lines, styleVals);
 
-  const lineHeight = styleVals.textLineHeight * ONE_EM;
-  const lineShiftX = getLineShift(styleVals.textJustify, box.shiftX);
-  const spacing = styleVals.textLetterSpacing * ONE_EM;
-  const fontScalar = styleVals.textSize / ONE_EM;
+  // Get dimensions and relative position of text area (in glyph pixels)
+  const { textLineHeight, textAnchor, textOffset } = styleVals;
+  const w = Math.max(...lines.map(l => l.width));
+  const h = lines.length * textLineHeight * ONE_EM;
+  const textbox = getBox(w, h, textAnchor, textOffset.map(c => c * ONE_EM));
 
-  const chars = lines.flatMap((line, i) => {
-    const x = (box.w - line.width) * lineShiftX + box.x;
-    const y = i * lineHeight + box.y;
-    return layoutLine(line, [x, y], spacing, fontScalar);
-  });
+  // Position characters within text area
+  const chars = layoutLines(lines, textbox, styleVals);
 
-  return Object.assign(chars, { fontScalar, bbox: box.bbox });
+  // Get padded text box (for collision checks)
+  const { textSize, textPadding } = styleVals;
+  const textBbox = scalePadBox(textSize / ONE_EM, textPadding, textbox);
+
+  return Object.assign(chars, { bbox: textBbox });
 }
 
-function layoutLine(glyphs, origin, spacing, scalar) {
-  let xCursor = origin[0];
-  const y0 = origin[1];
+export function layoutSprite(sprite, styleVals) {
+  const { metrics: { w, h }, spriteRect } = sprite;
 
-  return glyphs.map(g => {
-    const { left, top, advance, w, h } = g.metrics;
+  const { iconAnchor, iconOffset, iconSize, iconPadding } = styleVals;
+  const iconbox = getBox(w, h, iconAnchor, iconOffset);
+  const bbox = scalePadBox(iconSize, iconPadding, iconbox);
 
-    const dx = xCursor + left - RECT_BUFFER;
-    // A 2.5 pixel shift in Y is needed to match MapLibre results
-    // TODO: figure out why???
-    const dy = y0 - top - RECT_BUFFER - 2.5;
+  const pos = [iconbox.x, iconbox.y, w, h].map(c => c * iconSize);
 
-    xCursor += advance + spacing;
-
-    const pos = [dx, dy, w, h].map(c => c * scalar);
-    const rect = g.sdfRect;
-
-    return { pos, rect };
-  });
-}
-
-function getLineShift(justify, boxShiftX) {
-  switch (justify) {
-    case "auto":
-      return -boxShiftX;
-    case "left":
-      return 0;
-    case "right":
-      return 1;
-    case "center":
-    default:
-      return 0.5;
-  }
+  return { pos, rect: spriteRect, bbox };
 }

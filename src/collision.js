@@ -1,6 +1,10 @@
 const { min, max, cos, sin } = Math;
 
-export function pointCollision(chars, anchor, tree) {
+export function buildCollider(placement) {
+  return (placement === "line") ? lineCollision : pointCollision;
+}
+
+function pointCollision(chars, anchor, tree) {
   const [x0, y0] = anchor;
   const box = formatBox(x0, y0, chars.bbox);
 
@@ -18,7 +22,7 @@ function formatBox(x0, y0, bbox) {
   };
 }
 
-export function lineCollision(chars, anchor, tree) {
+function lineCollision(chars, anchor, tree) {
   const [x0, y0, angle] = anchor;
 
   const cos_a = cos(angle);

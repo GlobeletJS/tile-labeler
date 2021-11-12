@@ -706,36 +706,11 @@ function measureLine(glyphs, spacing) {
     .reduce((a, c) => a + c + spacing);
 }
 
-function getTextBox(lines, styleVals) {
-  const { textLineHeight, textSize,
-    textAnchor, textOffset, textPadding } = styleVals;
-
-  // Get dimensions and relative position of text area in glyph pixels
-  const w = Math.max(...lines.map(l => l.width));
-  const h = lines.length * textLineHeight * ONE_EM;
-
-  const offset = textOffset.map(c => c * ONE_EM);
-  const { x, y, sx } = getCorner(w, h, textAnchor, offset);
-
-  const bbox = scalePadBox(textSize / ONE_EM, textPadding, x, y, w, h);
-
-  return { x, y, w, h, shiftX: sx, bbox };
-}
-
-function getCorner(w, h, anchor, offset) {
+function getBox(w, h, anchor, offset) {
   const [sx, sy] = getBoxShift(anchor);
   const x = sx * w + offset[0];
   const y = sy * h + offset[1];
-  return { x, y, sx };
-}
-
-function scalePadBox(scale, pad, x, y, w, h) {
-  return [
-    x * scale - pad,
-    y * scale - pad,
-    (x + w) * scale + pad,
-    (y + h) * scale + pad,
-  ];
+  return { x, y, w, h, shiftX: sx };
 }
 
 function getBoxShift(anchor) {
@@ -763,13 +738,18 @@ function getBoxShift(anchor) {
   }
 }
 
+function scalePadBox(scale, pad, { x, y, w, h }) {
+  return [
+    x * scale - pad,
+    y * scale - pad,
+    (x + w) * scale + pad,
+    (y + h) * scale + pad,
+  ];
+}
+
 const RECT_BUFFER = GLYPH_PBF_BORDER + ATLAS_PADDING;
 
-function layoutLines(glyphs, styleVals) {
-  // TODO: what if splitLines returns nothing?
-  const lines = splitLines(glyphs, styleVals);
-  const box = getTextBox(lines, styleVals);
-
+function layoutLines(lines, box, styleVals) {
   const lineHeight = styleVals.textLineHeight * ONE_EM;
   const lineShiftX = getLineShift(styleVals.textJustify, box.shiftX);
   const spacing = styleVals.textLetterSpacing * ONE_EM;
@@ -781,7 +761,7 @@ function layoutLines(glyphs, styleVals) {
     return layoutLine(line, [x, y], spacing, fontScalar);
   });
 
-  return Object.assign(chars, { fontScalar, bbox: box.bbox });
+  return Object.assign(chars, { fontScalar });
 }
 
 function layoutLine(glyphs, origin, spacing, scalar) {
@@ -819,7 +799,32 @@ function getLineShift(justify, boxShiftX) {
   }
 }
 
+function layout(glyphs, sprite, styleVals) {
+  // Split text into lines
+  // TODO: what if splitLines returns nothing?
+  const lines = splitLines(glyphs, styleVals);
+
+  // Get dimensions and relative position of text area (in glyph pixels)
+  const { textLineHeight, textAnchor, textOffset } = styleVals;
+  const w = Math.max(...lines.map(l => l.width));
+  const h = lines.length * textLineHeight * ONE_EM;
+  const textbox = getBox(w, h, textAnchor, textOffset.map(c => c * ONE_EM));
+
+  // Position characters within text area
+  const chars = layoutLines(lines, textbox, styleVals);
+
+  // Get padded text box (for collision checks)
+  const { textSize, textPadding } = styleVals;
+  const textBbox = scalePadBox(textSize / ONE_EM, textPadding, textbox);
+
+  return Object.assign(chars, { bbox: textBbox });
+}
+
 const { min, max: max$2, cos: cos$1, sin: sin$1 } = Math;
+
+function buildCollider(placement) {
+  return (placement === "line") ? lineCollision : pointCollision;
+}
 
 function pointCollision(chars, anchor, tree) {
   const [x0, y0] = anchor;
@@ -1070,12 +1075,10 @@ function initShaping(style, spriteData) {
     if (!sprite && !glyphs) return;
 
     const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
-    const chars = layoutLines(glyphs, layoutVals);
+    const chars = layout(glyphs, sprite, layoutVals);
     // const icon = layoutSprite(sprite, layoutVals);
 
-    const collides = (layoutVals.symbolPlacement === "line")
-      ? lineCollision
-      : pointCollision;
+    const collides = buildCollider(layoutVals.symbolPlacement);
 
     // TODO: get extent from tile?
     const anchors = getAnchors(feature.geometry, 512, chars, layoutVals)
