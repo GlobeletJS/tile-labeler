@@ -1,32 +1,8 @@
-export function initStyle({ layout, paint }) {
-  const layoutKeys = [
-    "icon-anchor",
-    "icon-offset",
-    "icon-padding",
-    "icon-rotation-alignment",
-    "icon-size",
-    "symbol-placement",
-    "symbol-spacing",
-    "text-anchor",
-    "text-justify",
-    "text-letter-spacing",
-    "text-line-height",
-    "text-max-width",
-    "text-offset",
-    "text-padding",
-    "text-rotation-alignment",
-    "text-size",
-  ];
-
-  const layoutFuncs = layoutKeys
+export function initStyleGetters(keys, { layout, paint }) {
+  const layoutFuncs = keys.layout
     .map(k => ([camelCase(k), layout[k]]));
 
-  const paintKeys = [
-    "text-color",
-    "text-opacity",
-  ];
-
-  const bufferFuncs = paintKeys
+  const bufferFuncs = keys.paint
     .filter(k => paint[k].type === "property")
     .map(k => ([camelCase(k), paint[k]]));
 

@@ -1,6 +1,6 @@
-export function getBuffers(chars, anchor, tileCoord, bufferVals) {
+export function getBuffers(chars, anchor, tileCoords) {
   const origin = [...anchor, chars.fontScalar];
-  const { z, x, y } = tileCoord;
+  const { z, x, y } = tileCoords;
 
   const buffers = {
     sdfRect: chars.flatMap(c => c.rect),
@@ -9,7 +9,7 @@ export function getBuffers(chars, anchor, tileCoord, bufferVals) {
     tileCoords: chars.flatMap(() => [x, y, z]),
   };
 
-  Object.entries(bufferVals).forEach(([key, val]) => {
+  Object.entries(chars.bufferVals).forEach(([key, val]) => {
     buffers[key] = chars.flatMap(() => val);
   });
 

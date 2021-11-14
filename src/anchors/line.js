@@ -3,7 +3,27 @@ import { fitLine } from "./fitting.js";
 
 const { max } = Math;
 
-export function placeLineAnchors(line, extent, chars, styleVals) {
+export function getLineAnchors(geometry, extent, chars, layoutVals) {
+  const { type, coordinates } = geometry;
+
+  function mapLine(line) {
+    return placeLineAnchors(line, extent, chars, layoutVals);
+  }
+
+  switch (type) {
+    case "LineString":
+      return mapLine(coordinates);
+    case "MultiLineString":
+    case "Polygon":
+      return coordinates.flatMap(mapLine);
+    case "MultiPolygon":
+      return coordinates.flat().flatMap(mapLine);
+    default:
+      return [];
+  }
+}
+
+function placeLineAnchors(line, extent, chars, styleVals) {
   // TODO: consider icon-rotation-alignment
   const { textRotationAlignment, symbolSpacing, textSize } = styleVals;
 

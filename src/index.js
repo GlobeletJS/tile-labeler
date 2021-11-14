@@ -1,36 +1,27 @@
-export { initAtlasGetter } from "./atlas.js";
+export { initAtlasGetter } from "./atlas/atlas.js";
 
-import { initStyle } from "./style.js";
-import { getSprite, getGlyphs } from "./glyphs.js";
-import { layout } from "./layout.js";
-import { buildCollider } from "./collision.js";
-import { getAnchors } from "./anchors.js";
+import { initIcon } from "./icon/icon.js";
+import { initText } from "./text/text.js";
+import { initAnchors } from "./anchors/anchors.js";
 import { getBuffers } from "./buffers.js";
 
 export function initShaping(style, spriteData) {
-  const getStyleVals = initStyle(style);
+  const getIcon = initIcon(style, spriteData);
+  const getText = initText(style);
+  const getAnchors = initAnchors(style);
 
   return function(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
-    const sprite = getSprite(feature, spriteData);
-    const glyphs = getGlyphs(feature, atlas);
-    if (!sprite && !glyphs) return;
+    const icon = getIcon(feature, tileCoords);
+    const text = getText(feature, tileCoords, atlas);
+    if (!icon && !text) return;
 
-    const { layoutVals, bufferVals } = getStyleVals(tileCoords.z, feature);
-    const chars = layout(glyphs, sprite, layoutVals);
-    // const icon = layoutSprite(sprite, layoutVals);
-
-    const collides = buildCollider(layoutVals.symbolPlacement);
-
-    // TODO: get extent from tile?
-    const anchors = getAnchors(feature.geometry, 512, chars, layoutVals)
-      .filter(anchor => !collides(chars, anchor, tree));
-
+    const anchors = getAnchors(feature, tileCoords, text, icon, tree);
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(chars, anchor, tileCoords, bufferVals))
+      .map(anchor => getBuffers(text, anchor, tileCoords))
       .reduce(combineBuffers);
   };
 }
