@@ -4,13 +4,15 @@ export function buildCollider(placement) {
   return (placement === "line") ? lineCollision : pointCollision;
 }
 
-function pointCollision(chars, anchor, tree) {
+function pointCollision(icon, text, anchor, tree) {
   const [x0, y0] = anchor;
-  const box = formatBox(x0, y0, chars.bbox);
+  const boxes = [];
+  if (icon) boxes.push(formatBox(x0, y0, icon.bbox));
+  if (text) boxes.push(formatBox(x0, y0, text.bbox));
 
-  if (tree.collides(box)) return true;
+  if (boxes.some(tree.collides, tree)) return true;
   // TODO: drop if outside tile?
-  tree.insert(box);
+  boxes.forEach(tree.insert, tree);
 }
 
 function formatBox(x0, y0, bbox) {
@@ -22,15 +24,17 @@ function formatBox(x0, y0, bbox) {
   };
 }
 
-function lineCollision(chars, anchor, tree) {
+function lineCollision(icon, text, anchor, tree) {
   const [x0, y0, angle] = anchor;
 
   const cos_a = cos(angle);
   const sin_a = sin(angle);
   const rotate = ([x, y]) => [x * cos_a - y * sin_a, x * sin_a + y * cos_a];
 
-  const boxes = chars.map(c => getCharBbox(c.pos, rotate))
+  // TODO: what if no text?
+  const boxes = text.map(c => getCharBbox(c.pos, rotate))
     .map(bbox => formatBox(x0, y0, bbox));
+  if (icon) boxes.push(formatBox(x0, y0, getCharBbox(icon.pos, rotate)));
 
   if (boxes.some(tree.collides, tree)) return true;
   boxes.forEach(tree.insert, tree);

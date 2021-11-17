@@ -867,13 +867,15 @@ function buildCollider(placement) {
   return (placement === "line") ? lineCollision : pointCollision;
 }
 
-function pointCollision(chars, anchor, tree) {
+function pointCollision(icon, text, anchor, tree) {
   const [x0, y0] = anchor;
-  const box = formatBox(x0, y0, chars.bbox);
+  const boxes = [];
+  if (icon) boxes.push(formatBox(x0, y0, icon.bbox));
+  if (text) boxes.push(formatBox(x0, y0, text.bbox));
 
-  if (tree.collides(box)) return true;
+  if (boxes.some(tree.collides, tree)) return true;
   // TODO: drop if outside tile?
-  tree.insert(box);
+  boxes.forEach(tree.insert, tree);
 }
 
 function formatBox(x0, y0, bbox) {
@@ -885,15 +887,17 @@ function formatBox(x0, y0, bbox) {
   };
 }
 
-function lineCollision(chars, anchor, tree) {
+function lineCollision(icon, text, anchor, tree) {
   const [x0, y0, angle] = anchor;
 
   const cos_a = cos$1(angle);
   const sin_a = sin$1(angle);
   const rotate = ([x, y]) => [x * cos_a - y * sin_a, x * sin_a + y * cos_a];
 
-  const boxes = chars.map(c => getCharBbox(c.pos, rotate))
+  // TODO: what if no text?
+  const boxes = text.map(c => getCharBbox(c.pos, rotate))
     .map(bbox => formatBox(x0, y0, bbox));
+  if (icon) boxes.push(formatBox(x0, y0, getCharBbox(icon.pos, rotate)));
 
   if (boxes.some(tree.collides, tree)) return true;
   boxes.forEach(tree.insert, tree);
@@ -1068,13 +1072,13 @@ function placeLineAnchors(line, extent, chars, styleVals) {
 function initAnchors(style) {
   const getStyles = initStyleGetters(symbolKeys, style);
 
-  return function(feature, tileCoords, text, icon, tree) {
+  return function(feature, tileCoords, icon, text, tree) {
     const { layoutVals } = getStyles(tileCoords.z, feature);
     const collides = buildCollider(layoutVals.symbolPlacement);
 
-    // TODO: get extent from tile? And use icon
+    // TODO: get extent from tile?
     return getAnchors(feature.geometry, 512, text, layoutVals)
-      .filter(anchor => !collides(text, anchor, tree));
+      .filter(anchor => !collides(icon, text, anchor, tree));
   };
 }
 
@@ -1089,12 +1093,12 @@ const symbolKeys = {
   paint: [],
 };
 
-function getAnchors(geometry, extent, chars, layoutVals) {
+function getAnchors(geometry, extent, text, layoutVals) {
   switch (layoutVals.symbolPlacement) {
     case "point":
       return getPointAnchors(geometry);
     case "line":
-      return getLineAnchors(geometry, extent, chars, layoutVals);
+      return getLineAnchors(geometry, extent, text, layoutVals);
     default:
       return [];
   }
@@ -1111,22 +1115,50 @@ function getPointAnchors({ type, coordinates }) {
   }
 }
 
-function getBuffers(chars, anchor, tileCoords) {
-  const origin = [...anchor, chars.fontScalar];
-  const { z, x, y } = tileCoords;
+function getBuffers(icon, text, anchor, tileCoords) {
+  const iconBuffers = getIconBuffers(icon, anchor, tileCoords);
+  const textBuffers = getTextBuffers(text, anchor, tileCoords);
+  return mergeBuffers(iconBuffers, textBuffers);
+}
 
+function getIconBuffers(icon, anchor, { z, x, y }) {
+  if (!icon) return;
+
+  // NOTE: mergeBuffers may overwrite tileCoords with the text buffer of the
+  // same name. This is OK because the text buffer, if it exists, is longer
   const buffers = {
-    sdfRect: chars.flatMap(c => c.rect),
-    charPos: chars.flatMap(c => c.pos),
-    labelPos: chars.flatMap(() => origin),
-    tileCoords: chars.flatMap(() => [x, y, z]),
+    spriteRect: icon.rect,
+    spritePos: icon.pos,
+    labelPos0: [...anchor],
+    tileCoords: [x, y, z],
   };
 
-  Object.entries(chars.bufferVals).forEach(([key, val]) => {
-    buffers[key] = chars.flatMap(() => val);
+  return buffers;
+}
+
+function getTextBuffers(text, anchor, { z, x, y }) {
+  if (!text) return;
+
+  const origin = [...anchor, text.fontScalar];
+
+  const buffers = {
+    sdfRect: text.flatMap(c => c.rect),
+    charPos: text.flatMap(c => c.pos),
+    labelPos: text.flatMap(() => origin),
+    tileCoords: text.flatMap(() => [x, y, z]),
+  };
+
+  Object.entries(text.bufferVals).forEach(([key, val]) => {
+    buffers[key] = text.flatMap(() => val);
   });
 
   return buffers;
+}
+
+function mergeBuffers(buf1, buf2) {
+  if (!buf1) return buf2;
+  if (!buf2) return buf1;
+  return Object.assign(buf1, buf2);
 }
 
 function initShaping(style, spriteData) {
@@ -1141,11 +1173,11 @@ function initShaping(style, spriteData) {
     const text = getText(feature, tileCoords, atlas);
     if (!icon && !text) return;
 
-    const anchors = getAnchors(feature, tileCoords, text, icon, tree);
+    const anchors = getAnchors(feature, tileCoords, icon, text, tree);
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(text, anchor, tileCoords))
+      .map(anchor => getBuffers(icon, text, anchor, tileCoords))
       .reduce(combineBuffers);
   };
 }

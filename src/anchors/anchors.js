@@ -5,13 +5,13 @@ import { getLineAnchors } from "./line.js";
 export function initAnchors(style) {
   const getStyles = initStyleGetters(symbolKeys, style);
 
-  return function(feature, tileCoords, text, icon, tree) {
+  return function(feature, tileCoords, icon, text, tree) {
     const { layoutVals } = getStyles(tileCoords.z, feature);
     const collides = buildCollider(layoutVals.symbolPlacement);
 
-    // TODO: get extent from tile? And use icon
+    // TODO: get extent from tile?
     return getAnchors(feature.geometry, 512, text, layoutVals)
-      .filter(anchor => !collides(text, anchor, tree));
+      .filter(anchor => !collides(icon, text, anchor, tree));
   };
 }
 
@@ -26,12 +26,12 @@ const symbolKeys = {
   paint: [],
 };
 
-function getAnchors(geometry, extent, chars, layoutVals) {
+function getAnchors(geometry, extent, text, layoutVals) {
   switch (layoutVals.symbolPlacement) {
     case "point":
       return getPointAnchors(geometry);
     case "line":
-      return getLineAnchors(geometry, extent, chars, layoutVals);
+      return getLineAnchors(geometry, extent, text, layoutVals);
     default:
       return [];
   }

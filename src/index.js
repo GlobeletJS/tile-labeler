@@ -17,11 +17,11 @@ export function initShaping(style, spriteData) {
     const text = getText(feature, tileCoords, atlas);
     if (!icon && !text) return;
 
-    const anchors = getAnchors(feature, tileCoords, text, icon, tree);
+    const anchors = getAnchors(feature, tileCoords, icon, text, tree);
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(text, anchor, tileCoords))
+      .map(anchor => getBuffers(icon, text, anchor, tileCoords))
       .reduce(combineBuffers);
   };
 }
