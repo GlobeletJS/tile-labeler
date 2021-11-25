@@ -11,10 +11,9 @@ export function initIcon(style, spriteData = {}) {
     const sprite = getSprite(feature, width, height, meta);
     if (!sprite) return;
 
-    // const { layoutVals, bufferVals } = getStyles(tileCoords.z, feature);
-    const { layoutVals } = getStyles(tileCoords.z, feature);
+    const { layoutVals, bufferVals } = getStyles(tileCoords.z, feature);
     const icon = layoutSprite(sprite, layoutVals);
-    return icon; // TODO: what about bufferVals?
+    return Object.assign(icon, { bufferVals }); // TODO: rethink this
   };
 }
 
@@ -26,7 +25,9 @@ const iconKeys = {
     "icon-rotation-alignment",
     "icon-size",
   ],
-  paint: [],
+  paint: [
+    "icon-opacity",
+  ],
 };
 
 function getSprite({ spriteID }, width, height, meta) {

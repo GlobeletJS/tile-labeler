@@ -22,13 +22,13 @@ export function initShaping(style, spriteData) {
 
     return anchors
       .map(anchor => getBuffers(icon, text, anchor, tileCoords))
-      .reduce(combineBuffers);
+      .reduce(combineBuffers, {});
   };
 }
 
 function combineBuffers(dict, buffers) {
-  Object.keys(dict).forEach(k => {
-    const base = dict[k];
+  Object.keys(buffers).forEach(k => {
+    const base = dict[k] || (dict[k] = []);
     buffers[k].forEach(v => base.push(v));
   });
   return dict;

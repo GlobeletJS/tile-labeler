@@ -30,6 +30,9 @@ const textKeys = {
   paint: [
     "text-color",
     "text-opacity",
+    "text-halo-blur",
+    "text-halo-color",
+    "text-halo-width",
   ],
 };
 

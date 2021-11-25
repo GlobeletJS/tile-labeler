@@ -16,6 +16,10 @@ function getIconBuffers(icon, anchor, { z, x, y }) {
     tileCoords: [x, y, z],
   };
 
+  Object.entries(icon.bufferVals).forEach(([key, val]) => {
+    buffers[key] = val;
+  });
+
   return buffers;
 }
 
