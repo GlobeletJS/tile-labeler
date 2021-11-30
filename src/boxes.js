@@ -38,3 +38,17 @@ export function scalePadBox(scale, pad, { x, y, w, h }) {
     (y + h) * scale + pad,
   ];
 }
+
+export function mergeBoxes(b1, b2) {
+  if (!b1) return b2;
+  if (!b2) return b1;
+
+  const { min, max } = Math;
+
+  return [
+    min(b1[0], b2[0]),
+    min(b1[1], b2[1]),
+    max(b1[2], b2[2]),
+    max(b1[3], b2[3]),
+  ];
+}

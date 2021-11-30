@@ -1,13 +1,20 @@
+import { mergeBoxes } from "../boxes.js";
 import { getLabelSegments } from "./segments.js";
 import { fitLine } from "./fitting.js";
 
 const { max } = Math;
 
-export function getLineAnchors(geometry, extent, chars, layoutVals) {
+export function getLineAnchors(geometry, extent, icon, text, layoutVals) {
   const { type, coordinates } = geometry;
 
+  const box = mergeBoxes(icon?.bbox, text?.bbox);
+  // TODO: consider icon-rotation-alignment
+  const labelLength = (layoutVals.textRotationAlignment === "viewport")
+    ? 0.0
+    : box[2] - box[0];
+
   function mapLine(line) {
-    return placeLineAnchors(line, extent, chars, layoutVals);
+    return placeLineAnchors(line, extent, labelLength, layoutVals);
   }
 
   switch (type) {
@@ -23,13 +30,8 @@ export function getLineAnchors(geometry, extent, chars, layoutVals) {
   }
 }
 
-function placeLineAnchors(line, extent, chars, styleVals) {
-  // TODO: consider icon-rotation-alignment
-  const { textRotationAlignment, symbolSpacing, textSize } = styleVals;
-
-  const labelLength = (textRotationAlignment === "viewport")
-    ? 0.0
-    : chars.bbox[2] - chars.bbox[0];
+function placeLineAnchors(line, extent, labelLength, styleVals) {
+  const { symbolSpacing, textSize } = styleVals;
 
   const spacing = max(symbolSpacing, labelLength + symbolSpacing / 4);
 

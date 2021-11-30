@@ -31,9 +31,10 @@ function lineCollision(icon, text, anchor, tree) {
   const sin_a = sin(angle);
   const rotate = ([x, y]) => [x * cos_a - y * sin_a, x * sin_a + y * cos_a];
 
-  // TODO: what if no text?
-  const boxes = text.map(c => getCharBbox(c.pos, rotate))
-    .map(bbox => formatBox(x0, y0, bbox));
+  const boxes = [];
+  if (text) text.map(c => getCharBbox(c.pos, rotate))
+    .map(bbox => formatBox(x0, y0, bbox))
+    .forEach(box => boxes.push(box));
   if (icon) boxes.push(formatBox(x0, y0, getCharBbox(icon.pos, rotate)));
 
   if (boxes.some(tree.collides, tree)) return true;

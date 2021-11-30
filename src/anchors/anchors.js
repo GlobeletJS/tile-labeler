@@ -10,7 +10,7 @@ export function initAnchors(style) {
     const collides = buildCollider(layoutVals.symbolPlacement);
 
     // TODO: get extent from tile?
-    return getAnchors(feature.geometry, 512, text, layoutVals)
+    return getAnchors(feature.geometry, 512, icon, text, layoutVals)
       .filter(anchor => !collides(icon, text, anchor, tree));
   };
 }
@@ -26,12 +26,12 @@ const symbolKeys = {
   paint: [],
 };
 
-function getAnchors(geometry, extent, text, layoutVals) {
+function getAnchors(geometry, extent, icon, text, layoutVals) {
   switch (layoutVals.symbolPlacement) {
     case "point":
       return getPointAnchors(geometry);
     case "line":
-      return getLineAnchors(geometry, extent, text, layoutVals);
+      return getLineAnchors(geometry, extent, icon, text, layoutVals);
     default:
       return [];
   }
