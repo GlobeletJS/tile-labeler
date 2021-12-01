@@ -22,6 +22,9 @@ const symbolKeys = {
     // TODO: these are in 2 places: here and in the text getter
     "text-rotation-alignment",
     "text-size",
+    "icon-rotation-alignment",
+    "icon-keep-upright",
+    "text-keep-upright",
   ],
   paint: [],
 };

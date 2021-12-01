@@ -11,9 +11,7 @@ export function fitLine(points) {
 
   // Transform to a single anchor point and rotation angle
   const anchor = [xFit.mean, yFit.mean];
-  const angle = (xFit.slope < 0)
-    ? atan2(-yFit.slope, -xFit.slope)
-    : atan2(yFit.slope, xFit.slope);
+  const angle = atan2(yFit.slope, xFit.slope);
 
   // Compute an error metric: shift and rotate, find largest abs(y)
   const transform = setupTransform(anchor, angle);

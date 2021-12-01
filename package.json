@@ -37,14 +37,14 @@
   "homepage": "https://github.com/GlobeletJS/tile-labeler#readme",
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
-    "eslint": "^8.1.0",
+    "eslint": "^8.3.0",
     "eslint-config-globeletjs": "^0.0.6",
     "rbush": "^3.0.1",
-    "rollup": "^2.58.3",
+    "rollup": "^2.60.2",
     "tile-mixer": "^0.3.1",
     "tile-retriever": "^0.0.4",
     "tile-stencil": "^0.4.5",
-    "yawgl": "^0.3.3"
+    "yawgl": "^0.4.0"
   },
   "dependencies": {
     "sdf-manager": "^0.0.10"
