@@ -1,4 +1,5 @@
 import { mergeBoxes } from "../boxes.js";
+import { addDistances, getDistanceToEdge } from "./distance.js";
 import { getLabelSegments } from "./segments.js";
 import { fitLine } from "./fitting.js";
 
@@ -33,14 +34,14 @@ export function getLineAnchors(geometry, extent, icon, text, layoutVals) {
   }
 
   function placeLineAnchors(line) {
-    const isLineContinued = line[0].some(c => c <= 0 || extent <= c);
-    // TODO: correct offset for extension of line[0] beyond tile boundary
-    // (MapLibre assumes continued lines start ON the boundary)
-    const offset = isLineContinued ?
-      (spacing / 2) :
+    const pts = addDistances(line);
+    const distToEdge = getDistanceToEdge(pts, extent);
+
+    const offset = (distToEdge >= 0) ?
+      (distToEdge + spacing / 2) :
       (labelLength / 2 + textSize * 2);
 
-    return getLabelSegments(line, offset, spacing, labelLength, textSize / 2)
+    return getLabelSegments(pts, offset, spacing, labelLength, textSize / 2)
       .map(fitLine)
       .filter(fit => fit.error < textSize / 2)
       .map(({ anchor, angle }) => ([...anchor, flip(angle)]));

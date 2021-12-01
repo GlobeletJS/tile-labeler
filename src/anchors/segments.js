@@ -1,6 +1,5 @@
 export function getLabelSegments(line, offset, spacing, labelLength, charSize) {
-  const points = addDistances(line);
-  const lineLength = points[points.length - 1].dist;
+  const lineLength = line[line.length - 1].dist;
   const numLabels = Math.floor((lineLength - offset) / spacing) + 1;
 
   // How many points for each label? One per character width.
@@ -11,22 +10,8 @@ export function getLabelSegments(line, offset, spacing, labelLength, charSize) {
 
   return Array.from({ length: numLabels })
     .map((v, i) => offset + i * spacing - halfLen)
-    .map(s0 => getSegment(s0, dS, nS, points))
+    .map(s0 => getSegment(s0, dS, nS, line))
     .filter(segment => segment !== undefined);
-}
-
-function addDistances(line) {
-  let cumulative = 0.0;
-  const distances = line.slice(1).map((c, i) => {
-    cumulative += dist(line[i], c);
-    return { coord: c, dist: cumulative };
-  });
-  distances.unshift({ coord: line[0], dist: 0.0 });
-  return distances;
-}
-
-function dist([x0, y0], [x1, y1]) {
-  return Math.hypot(x1 - x0, y1 - y0);
 }
 
 function getSegment(s0, dS, nS, points) {
