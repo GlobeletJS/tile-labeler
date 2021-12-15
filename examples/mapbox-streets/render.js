@@ -10,14 +10,14 @@ export function render(data, atlas) {
 
   function drawOutlines({ spritePos, labelPos0, charPos, labelPos }) {
     context.strokeStyle = "blue";
-    if (spritePos) outlineRects(spritePos.slice(), labelPos0.slice());
+    if (spritePos) outlineRects(spritePos.slice(), labelPos0.slice(), 3);
     context.strokeStyle = "red";
-    if (charPos) outlineRects(charPos.slice(), labelPos.slice());
+    if (charPos) outlineRects(charPos.slice(), labelPos.slice(), 4);
   }
 
-  function outlineRects(rects, anchors) {
+  function outlineRects(rects, anchors, anchorLength) {
     while (rects.length) {
-      const [x0, y0, angle] = anchors.splice(0, 4);
+      const [x0, y0, angle] = anchors.splice(0, anchorLength);
       context.scale(pixRatio, pixRatio);
       context.translate(x0, y0);
       context.rotate(angle);
