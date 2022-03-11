@@ -17,7 +17,9 @@ export function getLineAnchors(geometry, extent, icon, text, layoutVals) {
   const alignment = (text) ? textRotationAlignment : iconRotationAlignment;
   const keepUpright = (text) ? textKeepUpright : iconKeepUpright;
 
-  const box = mergeBoxes(icon?.bbox, text?.bbox);
+  const iconbox = (icon) ? icon.bbox : undefined;
+  const textbox = (text) ? text.bbox : undefined;
+  const box = mergeBoxes(iconbox, textbox);
   const labelLength = (alignment === "viewport") ? 0.0 : box[2] - box[0];
   const spacing = max(symbolSpacing, labelLength + symbolSpacing / 4);
 

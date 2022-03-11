@@ -43,7 +43,7 @@
     "rollup": "^2.60.2",
     "tile-mixer": "^0.3.1",
     "tile-retriever": "^0.0.4",
-    "tile-stencil": "^0.4.5",
+    "tile-stencil": "^0.4.8",
     "yawgl": "^0.4.0"
   },
   "dependencies": {

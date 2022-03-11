@@ -37,8 +37,9 @@ const textKeys = {
 };
 
 function getGlyphs(feature, atlas) {
+  if (!atlas) return;
   const { charCodes, font } = feature;
-  const positions = atlas?.positions[font];
+  const positions = atlas.positions[font];
   if (!positions || !charCodes || !charCodes.length) return;
 
   const { width, height } = atlas.image;
