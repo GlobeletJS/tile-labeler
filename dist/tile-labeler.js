@@ -1222,22 +1222,19 @@ function getPointAnchors({ type, coordinates }) {
   }
 }
 
-function getBuffers(icon, text, anchor, tileCoords) {
-  const iconBuffers = getIconBuffers(icon, anchor, tileCoords);
-  const textBuffers = getTextBuffers(text, anchor, tileCoords);
+function getBuffers(icon, text, anchor) {
+  const iconBuffers = getIconBuffers(icon, anchor);
+  const textBuffers = getTextBuffers(text, anchor);
   return mergeBuffers(iconBuffers, textBuffers);
 }
 
-function getIconBuffers(icon, anchor, { z, x, y }) {
+function getIconBuffers(icon, anchor) {
   if (!icon) return;
 
-  // NOTE: mergeBuffers may overwrite tileCoords with the text buffer of the
-  // same name. This is OK because the text buffer, if it exists, is longer
   const buffers = {
     spriteRect: icon.rect,
     spritePos: icon.pos,
     labelPos0: [...anchor],
-    tileCoords: [x, y, z],
   };
 
   Object.entries(icon.bufferVals).forEach(([key, val]) => {
@@ -1247,7 +1244,7 @@ function getIconBuffers(icon, anchor, { z, x, y }) {
   return buffers;
 }
 
-function getTextBuffers(text, anchor, { z, x, y }) {
+function getTextBuffers(text, anchor) {
   if (!text) return;
 
   const origin = [...anchor, text.fontScalar];
@@ -1256,7 +1253,6 @@ function getTextBuffers(text, anchor, { z, x, y }) {
     sdfRect: text.flatMap(c => c.rect),
     charPos: text.flatMap(c => c.pos),
     labelPos: text.flatMap(() => origin),
-    tileCoords: text.flatMap(() => [x, y, z]),
   };
 
   Object.entries(text.bufferVals).forEach(([key, val]) => {
@@ -1288,7 +1284,7 @@ function initShaping(style, spriteData) {
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(icon, text, anchor, tileCoords))
+      .map(anchor => getBuffers(icon, text, anchor))
       .reduce(combineBuffers, {});
   };
 }

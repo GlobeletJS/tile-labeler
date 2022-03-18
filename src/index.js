@@ -21,7 +21,7 @@ export function initShaping(style, spriteData) {
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(icon, text, anchor, tileCoords))
+      .map(anchor => getBuffers(icon, text, anchor))
       .reduce(combineBuffers, {});
   };
 }
