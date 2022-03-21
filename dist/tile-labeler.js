@@ -1273,7 +1273,9 @@ function initShaping(style, spriteData) {
   const getText = initText(style);
   const getAnchors = initAnchors(style);
 
-  return function(feature, tileCoords, atlas, tree) {
+  return { serialize, getLength };
+
+  function serialize(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!
 
     const icon = getIcon(feature, tileCoords);
@@ -1286,7 +1288,13 @@ function initShaping(style, spriteData) {
     return anchors
       .map(anchor => getBuffers(icon, text, anchor))
       .reduce(combineBuffers, {});
-  };
+  }
+
+  function getLength(buffers) {
+    const { charPos, spritePos } = buffers;
+    // If charPos exists, it is longer than spritePos
+    return charPos ? charPos.length / 4 : spritePos.length / 4;
+  }
 }
 
 function combineBuffers(dict, buffers) {

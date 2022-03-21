@@ -23,15 +23,15 @@ export function initShapers(styles, spriteData) {
 function initLayerShaper(style, spriteData) {
   const { id, type } = style;
 
-  const transform = initShaping(style, spriteData);
-  if (!transform) return;
+  const { serialize } = initShaping(style, spriteData);
+  if (!serialize) return;
 
   return function(layer, tileCoords, atlas, tree) {
     const { extent, features } = layer;
 
     const transformed = features.map(feature => {
       const { properties, geometry } = feature;
-      return transform(feature, tileCoords, atlas, tree);
+      return serialize(feature, tileCoords, atlas, tree);
     }).filter(f => f !== undefined);
 
     if (!transformed.length) return;

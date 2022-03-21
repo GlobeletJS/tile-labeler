@@ -77,11 +77,11 @@ properties added (MODIFIED IN PLACE):
   label text
 
 ## initShaping
-Returns a function that constructs WebGL buffers for valid label features.
+Returns utilities to construct WebGL buffers for valid label features.
 
 ### Syntax
 ```javascript
-const shaper = tileLabeler.initShaping(style, spriteData);
+const { serialize, getLength } = tileLabeler.initShaping(style, spriteData);
 ```
 
 ### Arguments
@@ -93,9 +93,10 @@ const shaper = tileLabeler.initShaping(style, spriteData);
 [sprite]: https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/
 
 ### API
-The returned shaper function has the following signature:
+The returned methods include a serializer and a getLength method. The
+`serialize` method can serialize a feature, using the following signature:
 ```javascript
-const buffers = shaper(feature, zoom, atlas, tree);
+const buffers = serialize(feature, zoom, atlas, tree);
 ```
 
 where the arguments are as follows:
@@ -107,5 +108,14 @@ where the arguments are as follows:
 - `tree`: An [rbush][] object used for checking collisions with previous labels.
   The user is responsible for initializing this object, and supplying layers
   in the correct order.
+
+The `getLength` method inputs the buffers returned by `serialize`, and returns
+the number of instances that must be rendered to display the serialized feature.
+```javascript
+const numInstances = getLength(buffers);
+```
+Note: if the style specifies both a sprite image and a text label for the
+feature, the text label will have more instances (one per character). The
+value returned by `getLength` will represent the larger count.
 
 [rbush]: https://github.com/mourner/rbush
