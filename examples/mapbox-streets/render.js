@@ -6,22 +6,19 @@ export function render(data, atlas) {
   yawgl.resizeCanvasToDisplaySize(canvas, pixRatio);
   const context = canvas.getContext("2d");
 
-  Object.values(data).forEach(layer => layer.buffers.forEach(drawOutlines));
+  Object.values(data).forEach(layer => layer.buffers.forEach(outlineGlyphs));
 
-  function drawOutlines({ spritePos, labelPos0, charPos, labelPos }) {
-    context.strokeStyle = "blue";
-    if (spritePos) outlineRects(spritePos.slice(), labelPos0.slice(), 3);
-    context.strokeStyle = "red";
-    if (charPos) outlineRects(charPos.slice(), labelPos.slice(), 4);
-  }
+  function outlineGlyphs({ glyphPos, labelPos }) {
+    const glyphs = glyphPos.slice();
+    const anchors = labelPos.slice();
 
-  function outlineRects(rects, anchors, anchorLength) {
-    while (rects.length) {
-      const [x0, y0, angle] = anchors.splice(0, anchorLength);
+    while (glyphs.length) {
+      const [x0, y0, angle, scalar] = anchors.splice(0, 4);
+      context.strokeStyle = (scalar > 0.0) ? "red" : "blue";
       context.scale(pixRatio, pixRatio);
       context.translate(x0, y0);
       context.rotate(angle);
-      const [x, y, w, h] = rects.splice(0, 4);
+      const [x, y, w, h] = glyphs.splice(0, 4);
       context.strokeRect(x, y, w, h);
       context.setTransform(1, 0, 0, 1, 0, 0);
     }

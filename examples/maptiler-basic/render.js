@@ -9,8 +9,8 @@ export function render(data, atlas) {
 
   Object.values(data).forEach(layer => layer.buffers.forEach(outlineChars));
 
-  function outlineChars({ charPos, labelPos }) {
-    const chars = charPos.slice();
+  function outlineChars({ glyphPos, labelPos }) {
+    const chars = glyphPos.slice();
     const anchors = labelPos.slice();
     while (chars.length) {
       const [x0, y0, angle] = anchors.splice(0, 4);

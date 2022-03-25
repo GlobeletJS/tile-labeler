@@ -79,22 +79,24 @@ properties added (MODIFIED IN PLACE):
 ## initShaping
 Returns utilities to construct WebGL buffers for valid label features.
 
-### Syntax
+The syntax is as follows:
 ```javascript
-const { serialize, getLength } = tileLabeler.initShaping(style, spriteData);
+const { serialize, getLength, styleKeys } = tileLabeler
+  .initShaping(style, spriteData);
 ```
 
-### Arguments
+where the arguments are:
 - `style`: A 'symbol' layer from a [MapLibre style document][MapLibre], with 
   the `.layout` property parsed into value getters by [tile-stencil][].
 - `spriteData`: The data retrieved by [tile-stencil][] from the URL described
   in the [sprite property of the style document][sprite]
 
+There are three named returns: `{ serialize, getLength, styleKeys}`
+
 [sprite]: https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/
 
-### API
-The returned methods include a serializer and a getLength method. The
-`serialize` method can serialize a feature, using the following signature:
+### serialize
+The `serialize` method can serialize a feature, using the following signature:
 ```javascript
 const buffers = serialize(feature, zoom, atlas, tree);
 ```
@@ -109,13 +111,22 @@ where the arguments are as follows:
   The user is responsible for initializing this object, and supplying layers
   in the correct order.
 
+### getLength
 The `getLength` method inputs the buffers returned by `serialize`, and returns
 the number of instances that must be rendered to display the serialized feature.
 ```javascript
 const numInstances = getLength(buffers);
 ```
-Note: if the style specifies both a sprite image and a text label for the
-feature, the text label will have more instances (one per character). The
-value returned by `getLength` will represent the larger count.
+
+### styleKeys
+The `styleKeys` property is an Array of Strings, each representing the key
+of a [symbol style layer][symbol] property. The values of these properties,
+if they are specified as [feature property functions][propfuncs], will need
+to be loaded into buffers for rendering. tile-labeler does not construct these
+buffers, but `.getLength` and `.styleKeys` provide the information needed to
+construct them. See [tile-gl][] code for an example of how to do this.
 
 [rbush]: https://github.com/mourner/rbush
+[symbol]: https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#symbol
+[propfuncs]: https://maplibre.org/maplibre-gl-js-docs/style-spec/other/#function-property
+[tile-gl]: https://github.com/GlobeletJS/tile-gl
