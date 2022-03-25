@@ -23,14 +23,12 @@ export function initShaping(style, spriteData) {
     if (!anchors || !anchors.length) return;
 
     return anchors
-      .map(anchor => getBuffers(icon, text, anchor))
+      .flatMap(anchor => getBuffers(icon, text, anchor))
       .reduce(combineBuffers, {});
   }
 
   function getLength(buffers) {
-    const { charPos, spritePos } = buffers;
-    // If charPos exists, it is longer than spritePos
-    return charPos ? charPos.length / 4 : spritePos.length / 4;
+    return buffers.labelPos.length / 4;
   }
 }
 
