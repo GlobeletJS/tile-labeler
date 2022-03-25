@@ -2,39 +2,28 @@ import { initStyleGetters } from "../style.js";
 import { layout } from "./layout.js";
 
 export function initText(style) {
-  const getStyles = initStyleGetters(textKeys, style);
+  const getStyles = initStyleGetters(textLayoutKeys, style);
 
   return function(feature, tileCoords, atlas) {
     const glyphs = getGlyphs(feature, atlas);
     if (!glyphs || !glyphs.length) return;
 
-    const { layoutVals, bufferVals } = getStyles(tileCoords.z, feature);
-    const chars = layout(glyphs, layoutVals);
-    return Object.assign(chars, { bufferVals }); // TODO: rethink this
+    return layout(glyphs, getStyles(tileCoords.z, feature));
   };
 }
 
-const textKeys = {
-  layout: [
-    "symbol-placement", // TODO: both here and in ../anchors/anchors.js
-    "text-anchor",
-    "text-justify",
-    "text-letter-spacing",
-    "text-line-height",
-    "text-max-width",
-    "text-offset",
-    "text-padding",
-    "text-rotation-alignment",
-    "text-size",
-  ],
-  paint: [
-    "text-color",
-    "text-opacity",
-    "text-halo-blur",
-    "text-halo-color",
-    "text-halo-width",
-  ],
-};
+const textLayoutKeys = [
+  "symbol-placement", // TODO: both here and in ../anchors/anchors.js
+  "text-anchor",
+  "text-justify",
+  "text-letter-spacing",
+  "text-line-height",
+  "text-max-width",
+  "text-offset",
+  "text-padding",
+  "text-rotation-alignment",
+  "text-size",
+];
 
 function getGlyphs(feature, atlas) {
   if (!atlas) return;

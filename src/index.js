@@ -4,13 +4,14 @@ import { initIcon } from "./icon/icon.js";
 import { initText } from "./text/text.js";
 import { initAnchors } from "./anchors/anchors.js";
 import { getBuffers } from "./buffers.js";
+import { styleKeys } from "./style.js";
 
 export function initShaping(style, spriteData) {
   const getIcon = initIcon(style, spriteData);
   const getText = initText(style);
   const getAnchors = initAnchors(style);
 
-  return { serialize, getLength };
+  return { serialize, getLength, styleKeys };
 
   function serialize(feature, tileCoords, atlas, tree) {
     // tree is an RBush from the 'rbush' module. NOTE: will be updated!

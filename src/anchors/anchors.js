@@ -3,10 +3,10 @@ import { buildCollider } from "./collision.js";
 import { getLineAnchors } from "./line.js";
 
 export function initAnchors(style) {
-  const getStyles = initStyleGetters(symbolKeys, style);
+  const getStyles = initStyleGetters(symbolLayoutKeys, style);
 
   return function(feature, tileCoords, icon, text, tree) {
-    const { layoutVals } = getStyles(tileCoords.z, feature);
+    const layoutVals = getStyles(tileCoords.z, feature);
     const collides = buildCollider(layoutVals.symbolPlacement);
 
     // TODO: get extent from tile?
@@ -15,19 +15,16 @@ export function initAnchors(style) {
   };
 }
 
-const symbolKeys = {
-  layout: [
-    "symbol-placement",
-    "symbol-spacing",
-    // TODO: these are in 2 places: here and in the text getter
-    "text-rotation-alignment",
-    "text-size",
-    "icon-rotation-alignment",
-    "icon-keep-upright",
-    "text-keep-upright",
-  ],
-  paint: [],
-};
+const symbolLayoutKeys = [
+  "symbol-placement",
+  "symbol-spacing",
+  // TODO: these are in 2 places: here and in the text getter
+  "text-rotation-alignment",
+  "text-size",
+  "icon-rotation-alignment",
+  "icon-keep-upright",
+  "text-keep-upright",
+];
 
 function getAnchors(geometry, extent, icon, text, layoutVals) {
   switch (layoutVals.symbolPlacement) {

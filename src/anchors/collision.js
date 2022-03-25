@@ -6,9 +6,9 @@ export function buildCollider(placement) {
 
 function pointCollision(icon, text, anchor, tree) {
   const [x0, y0] = anchor;
-  const boxes = [];
-  if (icon) boxes.push(formatBox(x0, y0, icon.bbox));
-  if (text) boxes.push(formatBox(x0, y0, text.bbox));
+  const boxes = [icon, text]
+    .filter(label => label !== undefined)
+    .map(label => formatBox(x0, y0, label.bbox));
 
   if (boxes.some(tree.collides, tree)) return true;
   // TODO: drop if outside tile?
@@ -31,17 +31,16 @@ function lineCollision(icon, text, anchor, tree) {
   const sin_a = sin(angle);
   const rotate = ([x, y]) => [x * cos_a - y * sin_a, x * sin_a + y * cos_a];
 
-  const boxes = [];
-  if (text) text.map(c => getCharBbox(c.pos, rotate))
-    .map(bbox => formatBox(x0, y0, bbox))
-    .forEach(box => boxes.push(box));
-  if (icon) boxes.push(formatBox(x0, y0, getCharBbox(icon.pos, rotate)));
+  const boxes = [icon, text].flat()
+    .filter(glyph => glyph !== undefined)
+    .map(g => getGlyphBbox(g.pos, rotate))
+    .map(bbox => formatBox(x0, y0, bbox));
 
   if (boxes.some(tree.collides, tree)) return true;
   boxes.forEach(tree.insert, tree);
 }
 
-function getCharBbox([x, y, w, h], rotate) {
+function getGlyphBbox([x, y, w, h], rotate) {
   const corners = [
     [x, y], [x + w, y],
     [x, y + h], [x + w, y + h]

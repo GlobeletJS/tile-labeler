@@ -5,15 +5,13 @@ export function initIcon(style, spriteData = {}) {
   const { image: { width, height } = {}, meta = {} } = spriteData;
   if (!width || !height) return () => undefined;
 
-  const getStyles = initStyleGetters(iconKeys, style);
+  const getStyles = initStyleGetters(iconLayoutKeys, style);
 
   return function(feature, tileCoords) {
     const sprite = getSprite(feature.spriteID);
     if (!sprite) return;
 
-    const { layoutVals, bufferVals } = getStyles(tileCoords.z, feature);
-    const icon = layoutSprite(sprite, layoutVals);
-    return Object.assign(icon, { bufferVals }); // TODO: rethink this
+    return layoutSprites(sprite, getStyles(tileCoords.z, feature));
   };
 
   function getSprite(spriteID) {
@@ -29,21 +27,16 @@ export function initIcon(style, spriteData = {}) {
   }
 }
 
-const iconKeys = {
-  layout: [
-    "icon-anchor",
-    "icon-offset",
-    "icon-padding",
-    "icon-rotation-alignment",
-    "icon-size",
-  ],
-  paint: [
-    "icon-opacity",
-  ],
-};
+const iconLayoutKeys = [
+  "icon-anchor",
+  "icon-offset",
+  "icon-padding",
+  "icon-rotation-alignment",
+  "icon-size",
+];
 
-function layoutSprite(sprite, styleVals) {
-  const { metrics: { w, h }, spriteRect } = sprite;
+function layoutSprites(sprite, styleVals) {
+  const { metrics: { w, h }, spriteRect: rect } = sprite;
 
   const { iconAnchor, iconOffset, iconSize, iconPadding } = styleVals;
   const iconbox = getBox(w, h, iconAnchor, iconOffset);
@@ -51,5 +44,6 @@ function layoutSprite(sprite, styleVals) {
 
   const pos = [iconbox.x, iconbox.y, w, h].map(c => c * iconSize);
 
-  return { pos, rect: spriteRect, bbox };
+  // Structure return value to match ../text
+  return Object.assign([{ pos, rect }], { bbox, fontScalar: 0.0 });
 }
