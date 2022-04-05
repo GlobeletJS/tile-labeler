@@ -2,11 +2,17 @@
   "name": "tile-labeler",
   "version": "0.8.0",
   "description": "Convert map label features into WebGL buffers for rendering",
-  "main": "dist/tile-labeler.js",
-  "module": "src/index.js",
+  "main": "dist/tile-labeler.umd.js",
+  "module": "dist/tile-labeler.bundle.js",
+  "unBundled": "src/index.js",
+  "exports": {
+    "import": "./src/index.js",
+    "default": "./dist/tile-labeler.bundle.js"
+  },
+  "type": "module",
   "files": [
-    "src",
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "lint": "eslint src",
@@ -41,10 +47,10 @@
     "eslint-config-globeletjs": "^0.0.6",
     "rbush": "^3.0.1",
     "rollup": "^2.70.1",
-    "tile-mixer": "^0.3.1",
-    "tile-retriever": "^0.0.4",
-    "tile-stencil": "^0.4.9",
-    "yawgl": "^0.4.0"
+    "tile-mixer": "^0.3.3",
+    "tile-retriever": "^0.0.7",
+    "tile-stencil": "^0.4.10",
+    "yawgl": "^0.4.2"
   },
   "dependencies": {
     "sdf-manager": "^0.0.10"
