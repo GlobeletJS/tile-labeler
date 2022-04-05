@@ -1,6 +1,6 @@
 {
   "name": "tile-labeler",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Convert map label features into WebGL buffers for rendering",
   "main": "dist/tile-labeler.umd.js",
   "module": "dist/tile-labeler.bundle.js",
